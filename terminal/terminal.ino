@@ -12,8 +12,8 @@
 
 // Update these with values suitable for your network.
 byte mac[]    = {  0xDE, 0xED, 0xBA, 0xFE, 0xFE, 0xED };
-IPAddress ip(172, 30, 222, 75);
-IPAddress server(172, 30, 80, 56);
+IPAddress ip(172, 30, 222, 86);
+IPAddress server(172, 30, 80, 218);
 
 EthernetClient ethClient;
 PubSubClient client(ethClient);
@@ -32,15 +32,19 @@ void setup() {
   inputString.reserve(1000);
 
   // Open MQTT connection
-//  client.setServer(server, 1883);
-//  client.setCallback(callback);
-//  Ethernet.begin(mac, ip);
+  client.setServer(server, 1883);
+  client.setCallback(callback);
+  Ethernet.begin(mac, ip);
   
   // Allow the hardware to sort itself out
-//  delay(1500);
+  delay(1500);
 }
 
 void loop() {
+  // clear the string
+  inputString = "";
+  stringNotComplete = true;
+  
   // send AT command to query ibeacon
   Serial1.write("AT+DISI?");
   while(stringNotComplete) {
@@ -55,9 +59,6 @@ void loop() {
   // print the string when a "DISCE" arrives:
   if(!stringNotComplete) {
     Serial.println(inputString);
-    // clear the string
-    inputString = "";
-    stringNotComplete = true;
   }  
   
   // cut unnecessary part from raw data
@@ -77,14 +78,15 @@ void loop() {
   JsonObject& object = makeJson(DISI, numofdevice);
   int datalength = object.measureLength();
   char data[datalength];
-//  object.printTo(data, object.measureLength());
+  object.printTo(data, object.measureLength());
+  client.publish("data", data);
   object.printTo(Serial);
 
   //send json string to the server
-//  if (!client.connected()) {
-//    reconnect(data);
-//  }
-//  client.loop();
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
 }
 
 int CheckDistance(String DiscoveredDevice) {
@@ -164,7 +166,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.println();
 }
 
-void reconnect(char* data) {
+void reconnect() {
   // Loop until we're reconnected
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
@@ -174,7 +176,6 @@ void reconnect(char* data) {
       // Once connected, publish an announcement...
       client.publish("outTopic","hello world");
       // ... and resubscribe
-      client.publish("data", data);
       client.subscribe("inTopic");
     } else {
       Serial.print("failed, rc=");
@@ -194,13 +195,14 @@ JsonObject& makeJson(String* str, int numofdevice){
   object["zone"] = zone;
   JsonArray&  uuid  = object.createNestedArray("uuid");
   JsonArray&  type  = object.createNestedArray("type");
+  JsonArray&  distance  = object.createNestedArray("distance");
   
   int i;
   for(i = 0; i < numofdevice; i++){
-//    if(CheckDistance(DISI[i]) > 0){
       uuid.add(str[i].substring(UUIDPOS, 41));
       type.add(CheckType(str[i]));
-//    }
+      distance.add(CheckDistance(str[i]));
   }
   return object;
 }
+
