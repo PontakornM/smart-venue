@@ -12,7 +12,6 @@
 
 // Update these with values suitable for your network.
 byte mac[]    = {  0xDE, 0xED, 0xBA, 0xFE, 0xFE, 0xED };
-IPAddress ip(172, 30, 222, 86);
 IPAddress server(172, 30, 80, 218);
 
 EthernetClient ethClient;
@@ -26,7 +25,17 @@ boolean stringNotComplete = true;
 void setup() {
   // Open serial communications
   Serial.begin(9600);
-  Serial1.begin(9600);
+  Serial1.begin(9600);  
+
+  // setup the arduino IP address
+  Serial.println("Configuring an IP address..... ");
+  if (Ethernet.begin(mac) == 0) {
+    Serial.println("Failed to configure Ethernet using DHCP");
+    // no point in carrying on, so do nothing forevermore:
+    for (;;)
+      ;
+  }
+  IPAddress ip = setIPAddress();
 
   // reserve 1000 bytes for the inputString:
   inputString.reserve(1000);
@@ -41,6 +50,12 @@ void setup() {
 }
 
 void loop() {
+  //connect to MQTT broker
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
+  
   // clear the string
   inputString = "";
   stringNotComplete = true;
@@ -58,7 +73,7 @@ void loop() {
   
   // print the string when a "DISCE" arrives:
   if(!stringNotComplete) {
-    Serial.println(inputString);
+//    Serial.println(inputString);
   }  
   
   // cut unnecessary part from raw data
@@ -74,19 +89,13 @@ void loop() {
   String DISI[numofdevice];
   MakeDISI(disitemp, numofdevice, DISI);
   
-  //  make JSON string
+  //  make JSON string and send to the server
   JsonObject& object = makeJson(DISI, numofdevice);
   int datalength = object.measureLength();
   char data[datalength];
   object.printTo(data, object.measureLength());
   client.publish("data", data);
   object.printTo(Serial);
-
-  //send json string to the server
-  if (!client.connected()) {
-    reconnect();
-  }
-  client.loop();
 }
 
 int CheckDistance(String DiscoveredDevice) {
@@ -204,5 +213,21 @@ JsonObject& makeJson(String* str, int numofdevice){
       distance.add(CheckDistance(str[i]));
   }
   return object;
+}
+
+IPAddress setIPAddress()
+{
+  int myip[4];
+  Serial.print("My IP address: ");
+  for (byte thisByte = 0; thisByte < 4; thisByte++) {
+    // print the value of each byte of the IP address:
+    myip[thisByte] = Ethernet.localIP()[thisByte];
+    Serial.print(myip[thisByte]);
+    Serial.print(".");
+  }
+  IPAddress ip(myip[0], myip[1], myip[2], myip[3]);
+
+  Serial.println();
+  return ip;
 }
 
