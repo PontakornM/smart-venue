@@ -56,7 +56,7 @@ client.on('connect', function () {
      console.log(doc);
  });
  client.subscribe('outTopic');
-//  client.subscribe('requestZone');
+ client.subscribe('requestZone');
 });
 
 client.on('message', function (topic, message, packet) {
@@ -67,7 +67,7 @@ client.on('message', function (topic, message, packet) {
      var stringBuf = packet.payload.toString('utf-8');
      var data_obj = JSON.parse(stringBuf);
      console.log(data_obj);
-     check_reg();
+     //check_reg();
  }
  if(topic == "requestZone"){
      client.publish('responseZone','B');
