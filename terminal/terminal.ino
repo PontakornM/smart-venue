@@ -9,23 +9,24 @@
 #define MEASUREDPOWERPOS 50
 #define RSSIPOS 66
 #define UUIDPOS 9
+#define MODULEADDRLENGTH 20
 
 // Update these with values suitable for your network.
-byte mac[]    = {  0xDE, 0xED, 0xBA, 0xFE, 0xFE, 0xED };
-IPAddress server(172, 30, 80, 218);
+byte mac[] = {  0xDE, 0xED, 0xBA, 0xFE, 0xFE, 0xED };
+IPAddress server(172, 30, 88, 101);
 
 EthernetClient ethClient;
 PubSubClient client(ethClient);
 
-String zone = "B";
+String zone = "A";
 
 String inputString = "";
 boolean stringNotComplete = true;
 
-void setup() {
+void setup() {  
   // Open serial communications
   Serial.begin(9600);
-  Serial1.begin(9600);  
+  Serial1.begin(9600);
 
   // setup the arduino IP address
   Serial.println("Configuring an IP address..... ");
@@ -82,7 +83,7 @@ void loop() {
 
   // count total of queried devices
   int numofdevice = CountDevice(disitemp);
-  Serial.print("Founded devices : ");
+  Serial.print("\nFounded devices : ");
   Serial.println(numofdevice);
 
   // make DISI
@@ -91,14 +92,15 @@ void loop() {
   
   //  make JSON string and send to the server
   JsonObject& object = makeJson(DISI, numofdevice);
-  int datalength = object.measureLength();
+  int datalength = object.measureLength() + 1;
   char data[datalength];
-  object.printTo(data, object.measureLength());
+  object.printTo(data, datalength);
   client.publish("data", data);
   object.printTo(Serial);
 }
 
 int CheckDistance(String DiscoveredDevice) {
+  int proximity;
   String temp = DiscoveredDevice.substring(MEASUREDPOWERPOS, 52);
   int MeasuredPower = SignedHexToDec(temp);
 
@@ -106,7 +108,18 @@ int CheckDistance(String DiscoveredDevice) {
   int rssi = temp.toInt();
 
   int distance = rssi - MeasuredPower;
-  return distance;  
+  
+  if(distance > 0){
+    proximity = 1;
+  }else if(distance == 0){
+    proximity = 0;
+  }else if(distance < 0){
+    proximity = -1;
+  }else{
+    proximity = 2;
+  }
+  
+  return proximity;  
 }
 
 String CheckType(String DiscoveredDevice) {
@@ -139,6 +152,7 @@ String HeaderTrailerTrim(String str) {
   str.replace("OK+DISIS", "");
   str.replace("OK+DISCE", "");
   str.replace("OK+DISC:", "");
+  str.replace("OK+ADDR:", "");
   return str;
 }
 
@@ -204,19 +218,18 @@ JsonObject& makeJson(String* str, int numofdevice){
   object["zone"] = zone;
   JsonArray&  uuid  = object.createNestedArray("uuid");
   JsonArray&  type  = object.createNestedArray("type");
-  JsonArray&  distance  = object.createNestedArray("distance");
+  JsonArray&  proximity  = object.createNestedArray("proximity");
   
   int i;
   for(i = 0; i < numofdevice; i++){
       uuid.add(str[i].substring(UUIDPOS, 41));
       type.add(CheckType(str[i]));
-      distance.add(CheckDistance(str[i]));
+      proximity.add(CheckDistance(str[i]));
   }
   return object;
 }
 
-IPAddress setIPAddress()
-{
+IPAddress setIPAddress(){
   int myip[4];
   Serial.print("My IP address: ");
   for (byte thisByte = 0; thisByte < 4; thisByte++) {
@@ -229,5 +242,21 @@ IPAddress setIPAddress()
 
   Serial.println();
   return ip;
+}
+
+void getZone(){
+  client.subscribe("responseZone");
+  String buffaddr = "";
+  Serial1.write("AT+ADDR?");
+  while(buffaddr.length() < MODULEADDRLENGTH) {
+    String bufferString = Serial1.readString();
+    // add it to the bufferString:
+    buffaddr += bufferString;
+  }
+  buffaddr = HeaderTrailerTrim(buffaddr);
+  Serial.println(buffaddr);
+  char addr[MODULEADDRLENGTH];
+  buffaddr.toCharArray(addr, MODULEADDRLENGTH);
+  client.publish("requestZone", addr);
 }
 
