@@ -1,5 +1,5 @@
 
-var dbSocket = require('socket.io-client').connect("http://localhost:9000");
+var dbSocket = require('socket.io-client').connect("http://172.30.88.101:9000");
 
 var express = require('express');
 var moment = require('moment');
