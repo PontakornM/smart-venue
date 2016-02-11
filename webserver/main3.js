@@ -1,5 +1,5 @@
 
-var dbSocket = require('socket.io-client').connect("http://172.30.88.101:9000");
+var dbSocket = require('socket.io-client').connect("http://172.30.80.123:9000");
 
 var express = require('express');
 var moment = require('moment');
@@ -20,6 +20,8 @@ var logger = log4js.getLogger();
 
 var securityTimeout;
 var securityInterval;
+var navItem = [];
+
 
 dbSocket.on('DataService', function(data){
   // logger.debug(data);
@@ -29,6 +31,8 @@ dbSocket.on('DataService', function(data){
 var setID = function(socket){
 
     socket.on('setID', function(data){
+
+
       user = _.find(totalData,function(item){ return item.uuid == data.uuid;});
       logger.debug("user",user);
       console.log(user);
@@ -38,8 +42,18 @@ var setID = function(socket){
         socket.emit('User',{user: user});
         itemData = _.filter(totalData,function(item){ return item.type == 1;} );
         // logger.debug("itemData",itemData);
-        socket.emit('SearchData',{searchData: itemData});
+        socket.emit('SearchData',{searchData: totalData});
 
+        socket.on('collectNavItem',function(data){
+          logger.debug(_.findIndex(navItem,{uuid:data.uuid}),data.uuid);
+
+          navItem.push(data);
+          logger.debug(navItem,data);
+        });
+
+        socket.on('cancleNavigate', function(data){
+          navItem = _.reject(navItem,{uuid: data.uuid});
+        })
 
       }
     });
@@ -60,6 +74,7 @@ dbSocket.on('checkUpdate', function(data){
     if(checkUser){
         user = data;
         adminAble(user.admin);
+        checkNavigate();
         io.emit('User',{user: user});
     }
     else{
@@ -70,7 +85,7 @@ dbSocket.on('checkUpdate', function(data){
         var tmp = totalData[indexOfItem];
         totalData[indexOfItem] = data;
         itemData = _.filter(totalData,function(item){ return item.type == 1;} );
-        io.emit('SearchData',{searchData: itemData});
+        io.emit('SearchData',{searchData: totalData});
 
 
         if(data.security == 'Yes')
@@ -93,7 +108,7 @@ dbSocket.on('checkNew',function(data){
       logger.debug(data);
       totalData.push(data);
       itemData = _.filter(totalData,function(item){ return item.type == 1;} );
-      io.emit('SearchData',{searchData: itemData});
+      io.emit('SearchData',{searchData: totalData});
 })
 
 
@@ -112,12 +127,31 @@ var checkSecurity = function(watchItem, curItem){
   }
 }
 
+var checkNavigate = function(){
+
+    if(navItem.length > 0){
+      var tmpNavItem = _.filter(navItem,function(item){return item.zone == user.zone;});
+
+      if(tmpNavItem.length > 0){
+        for(var index in tmpNavItem){
+          logger.debug('arriveNavItem',navItem);
+          io.emit('arriveNavItem',tmpNavItem[index]);
+          navItem = _.reject(navItem,{uuid: tmpNavItem[index].uuid});
+        }
+      }
+    }
+}
+
+
+var dynamicItem;
 
 var adminAble = function(admin){
-    logger.debug(admin);
+    // logger.debug(admin);
 
     if(admin){
-      io.emit('NumberPeople',{people: _.filter(totalData,function(item){return item.type == 0;}).length });
+      dynamicItem = _.filter(totalData,function(item){return item.type == 0;});
+      logger.debug('dynamic',dynamicItem);
+      io.emit('NumberPeople',{people: dynamicItem });
       if(!securityInterval)
        securityInterval = setInterval(function(){
           // logger.debug(watchList.length);

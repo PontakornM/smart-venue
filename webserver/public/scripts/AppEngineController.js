@@ -18,14 +18,29 @@ App
   .controller('AppEngineController', function($scope, socket){
 
     var pinLogin = "xxx1";
-
+    $scope.searchText = "";
     socket.on('User', function(data){
       $scope.user = data.user;
     })
     socket.on('NumberPeople', function (data) {
-      $scope.numberPeople = data.people;
+      $scope.numberPeople = data.people.length;
+      console.log( data.people);
+
+      for(var index in data.people){
+        var zone = data.people[index].zone;
+        var tmp = $scope.presentData[zone];
+        if(tmp == undefined){
+          $scope.presentData[zone] = {};
+          tmp = $scope.presentData[zone];
+        }
+        if(!tmp.count){
+          tmp.count = 0;
+        }
+        tmp.count++;
+      }
     })
     socket.on('SearchData', function(data){
+      $scope.pureData = data.searchData;
       $scope.searchData = _.map(data.searchData,function(item){
                              return _.pick(item,"zone","name");
                             });
@@ -50,6 +65,37 @@ App
     })
     $scope.adminLogin = false;
 
+    $scope.arriveNavItem = [];
+    $scope.navItem = [];
+
+    $scope.navigate = function(navItem){
+      console.log(navItem.uuid,$scope.navItem);
+      if(!navItem.uuid){
+        $scope.searchText = "";
+        navItem = _.find($scope.pureData,function(item){ return item.name == navItem.name;});
+        // console.log(navItem);
+      }else{
+        $scope.cancle({});
+      }
+      console.log(navItem);
+      if(_.findIndex($scope.navItem,{uuid:navItem.uuid}) < 0 && navItem.zone != $scope.user.zone){
+        $scope.navItem.push(navItem);
+        socket.emit('collectNavItem',navItem);
+      }
+    }
+
+    socket.on('arriveNavItem',function(data){
+      $scope.navItem = _.reject($scope.navItem,{uuid : data.uuid});
+      $scope.arriveNavItem.push(data);
+      setTimeout(function(){$scope.arriveNavItem = _.reject(this,{uuid : data.uuid})},3000);
+    })
+
+    $scope.cancleNavigate = function(cancleItem){
+      $scope.navItem = _.reject($scope.navItem,{uuid : cancleItem.uuid});
+      socket.emit("cancleNavigate",cancleItem);
+    }
+
+
     $scope.adminLoginSubmit = function(pin){
       if(pin == pinLogin)
       {
@@ -71,7 +117,9 @@ App
     $scope.dialogLogin = function(){
       $scope.adminLogin = true;
     }
+
     $scope.dialogLogout = function(){
+      console.log($scope.user.admin);
       socket.emit('updateItem',{uuid:$scope.user.uuid, admin:false});
     }
     $scope.editing = function(selectItem){

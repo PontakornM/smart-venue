@@ -1,7 +1,9 @@
 // MongoDB
 var mongojs = require('mongojs');
 var db = mongojs('svdb',['registrar']);
+var db2 = mongojs('svdb',['deviceZone']);
 
+test_db();
 // Socket.io
 var app = require('express')();
 var server = require('http').Server(app);
@@ -40,21 +42,9 @@ io.on('connection',function(socket){
         });
 });
 
-client.on('err',function(err){
-    console.log(err);
-    if(err) {
-        client.on('reconnect');
-        console.log('reconnecting....');
-     }
-});
-
 client.on('connect', function () {
  console.log('Client Connected');
- //response the client's connection
- client.subscribe('data',function(err,doc){
-     if(err) console.log(err);
-     console.log(doc);
- });
+ client.subscribe('data');
  client.subscribe('outTopic');
  client.subscribe('requestZone');
 });
@@ -67,12 +57,14 @@ client.on('message', function (topic, message, packet) {
      var stringBuf = packet.payload.toString('utf-8');
      var data_obj = JSON.parse(stringBuf);
      console.log(data_obj);
-     //check_reg();
+     proc_json(data_obj);
  }
  if(topic == "requestZone"){
-     client.publish('responseZone','B');
+     client.publish('responseZone','B',function(){
+         console.log('Sending zone request...');
+      });
  }
- console.log(packet);
+//  console.log(packet);
  console.log("=====================================>\n\n");
 });
 
@@ -118,7 +110,7 @@ function add_newreg (data){
         timestamp : moment().format(),
         zone : data.zone,
         proximity : data.proximity,
-        type : data.type,   // o --> dynamic  & 1 --> static
+        type : parseInt(data.type),   // o --> dynamic  & 1 --> static
         security : "No"
     };
     if(data.type == '1') temp.security = "Yes";
@@ -149,17 +141,36 @@ function alarm(data){
 }
 
 // process json obj
-// function proc_json(json){
-//     var uuid_list = json.uuid;
-//     var temp = {
-//         uuid : null,
-//         timestamp : moment().format(),
-//         zone : json.zone,
-//         proximity : data.proximity,
-//         type : data.type,   // o --> dynamic  & 1 --> static
-//         security : "No"
-//     };
-//     for(var uuid in uuid_list ){
-        
-//     }
-// }
+function proc_json(json){
+    var len = json.uuid.length;
+    var temp = {
+            uuid : null,
+            timestamp : moment().format(),
+            zone : json.zone,
+            proximity : json.proximity,
+            type : null,   // o --> dynamic  & 1 --> static
+            security : "No"
+    };
+    while(len--){
+        temp.uuid = json.uuid[len];
+        temp.type = json.type[len];
+        if(json.type[len] == '1') temp.security = 'Yes';
+        console.log('len : ' + len );
+        console.log('temp => ',temp);
+        check_reg(temp);
+    }
+}
+
+// testing database
+function test_db() {
+    db.on('connect', function () {
+        console.log('database connected')
+    });
+
+    db2.on('connect', function () {
+        console.log('database2 connected')
+    });
+
+    db.registrar.find(function (err, docs) {});
+    db2.deviceZone.find(function (err, docs) {});
+}

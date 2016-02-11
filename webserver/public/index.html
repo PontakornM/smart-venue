@@ -38,9 +38,17 @@
       }
       #searchTextResults{
         position:absolute;
-        width:100%;
+        background:rgba(44, 62, 80,.7);
         z-index:10;
-        top:10px;
+        top:55px;
+        width:100%;
+        height:700px;
+        overflow-y:auto;
+      }
+      @media (max-width:700px) {
+          #searchTextResults{
+            top:30%;
+          }
       }
       .adminDisplay{
         display: block !important;
@@ -93,6 +101,7 @@
         padding:4px;
         color:#34495e;
         text-align:center;;
+        overflow:hidden;
       }
       .item:hover{
         background:rgba(236, 240, 241,.9);
@@ -109,9 +118,19 @@
         background:#2980b9;
         border-radius:5px;
         cursor: pointer;
+        display: block;
+        margin:10px;
       }
       .span-btn-primary:hover{
         background:#446CB3;
+      }
+
+      .span-btn-info{
+        padding:5px;
+        color:white;
+        background:#4ECDC4;
+        border-radius:5px;
+        cursor: default;
       }
 
     </style>
@@ -156,13 +175,20 @@
       <h4>{{node.name? node.name:node.uuid}} is lost from {{node.zone}}</h4>
     </div>
 
+    <div ng-repeat="navitem in navItem" style="margin-bottom:10px;background:#F64747;color:white;text-align:center;" >
+      <span >{{navitem.name? navitem.name:"anonymous"}} go on Zone {{navitem.zone}}</span><b style="float:right;margin-right:10px;" ng-click="cancleNavigate(navitem)">x</b>
+    </div>
+
     <div id="searchTextResults" ng-class="{searchDisplay:!searchText }">
       <div ng-repeat="node in searchData | filter: searchText "  class="col-xs-offset-2  col-md-offset-5">
         <div class="searchItem">
           <span style="font-size:18px;"><b>{{node.name? node.name:"Anonymous"}}</b> is in zone <b>{{node.zone}}</b></span>
+            <span class="span-btn-primary" ng-click="navigate(node)">navigate</span>
         </div>
       </div>
     </div>
+
+
     <div >
       <div style="text-align:center;">
         <b> You're in  <span style="font-size:25px;">zone {{user.zone}}</span> <br/> <span class="adminStatus" ng-if="user.admin">admin mode</span></b>
@@ -173,21 +199,21 @@
       <div class="row" style="text-align:center;">
 
           <div class="col-xs-6 zoneBG" >
-            <h4 >ZONE A</h4>
-            <div style="height:150px;overflow-y:auto;">
-              <div ng-repeat="nodes in presentData.A"   ng-class="{zoneDisplay: 'A' != user.zone,adminDisplay: user.admin}">
-                <div class="item" ng-click="showing(nodes)">
-                  <b >{{nodes.name? nodes.name:nodes.uuid}}</b>
+            <h4 >ZONE A</h4><span class="span-btn-info" ng-if="false">{{presentData.A.count}} {{ presentData.A.count >1? "people":"person"}} </span>
+            <div style="height:150px;overflow-y:auto;margin-top:10px;">
+              <div ng-repeat="nodes in presentData.A" ng-if="presentData.A.length"  ng-class="{zoneDisplay: 'A' != user.zone,adminDisplay: user.admin}">
+                <div class="item" ng-click="showing(nodes)" >
+                  <b >{{nodes.name? nodes.name:nodes.uuid}}</b><b>&nbsp;&nbsp;&nbsp;type: {{nodes.type}}</b>
                 </div>
               </div>
             </div>
           </div>
           <div class="col-xs-6 zoneBG">
-            <h4 >ZONE B</h4>
-            <div style="height:150px;overflow-y:auto;">
-              <div ng-repeat="nodes in presentData.B"  ng-class="{zoneDisplay: 'B' != user.zone,adminDisplay: user.admin}">
+            <h4 >ZONE B</h4><span class="span-btn-info" ng-if="false">{{presentData.B.count}} {{ presentData.B.count >1? "people":"person"}} </span>
+            <div style="height:150px;overflow-y:auto;margin-top:10px;">
+              <div ng-repeat="nodes in presentData.B" ng-if="presentData.B.length" ng-class="{zoneDisplay: 'B' != user.zone,adminDisplay: user.admin}">
                 <div class="item " ng-click="showing(nodes)">
-                  <b >{{nodes.name? nodes.name:nodes.uuid}}</b>
+                  <b >{{nodes.name? nodes.name:nodes.uuid}}</b><b>&nbsp;&nbsp;&nbsp;type: {{nodes.type}}</b>
                 </div>
               </div>
             </div>
@@ -197,21 +223,21 @@
 
         <div class="row" style="text-align:center;">
           <div class="col-xs-6 zoneBG">
-            <h4 >ZONE C</h4>
-            <div style="height:150px;overflow-y:auto;">
-              <div ng-repeat="nodes in presentData.C"  ng-class="{zoneDisplay: 'C' != user.zone,adminDisplay: user.admin}">
+            <h4 >ZONE C</h4><span class="span-btn-info" ng-if="false">{{presentData.C.count}} {{ presentData.C.count >1? "people":"person"}} </span>
+            <div style="height:150px;overflow-y:auto;margin-top:10px;">
+              <div ng-repeat="nodes in presentData.C" ng-if="presentData.C.length" ng-class="{zoneDisplay: 'C' != user.zone,adminDisplay: user.admin}">
                 <div class="item " ng-click="showing(nodes)">
-                  <b >{{nodes.name? nodes.name:nodes.uuid}}</b>
+                  <b >{{nodes.name? nodes.name:nodes.uuid}}</b><b>&nbsp;&nbsp;&nbsp;type: {{nodes.type}}</b>
                 </div>
               </div>
             </div>
           </div>
           <div class="col-xs-6 zoneBG">
-            <h4 >ZONE D</h4>
-            <div style="height:150px;overflow-y:auto;">
-              <div ng-repeat="nodes in presentData.D"  ng-class="{zoneDisplay: 'D' != user.zone,adminDisplay: user.admin}">
+            <h4 >ZONE D</h4><span class="span-btn-info" ng-if="false">{{presentData.D.count}} {{ presentData.D.count >1? "people":"person"}} </span>
+            <div style="height:150px;overflow-y:auto;margin-top:10px;">
+              <div ng-repeat="nodes in presentData.D" ng-if="presentData.D.length" ng-class="{zoneDisplay: 'D' != user.zone,adminDisplay: user.admin}">
                 <div class="item " ng-click="showing(nodes)">
-                  <b >{{nodes.name? nodes.name:nodes.uuid}}</b>
+                  <b >{{nodes.name? nodes.name:nodes.uuid}}</b><b>&nbsp;&nbsp;&nbsp;type: {{nodes.type}}</b>
                 </div>
               </div>
             </div>
@@ -239,12 +265,19 @@
           <p style="position:absolute;top:0px;right:10px;cursor:pointer;" ng-click="cancle(showItem);">x</p>
           <h3>{{showItem.name? showItem.name:showItem.uuid}}</h3>
           <p>description</p>
-          <div ng-if="showItem.description">
+          <div ng-if="showItem.description" style="margin-bottom:10px;">
             {{showItem.description}}
           </div>
+          <span class="span-btn-primary" ng-click="navigate(showItem)">navigate</span>
+
           <span class="span-btn-primary" ng-if="user.admin" ng-click="editing(showItem)">edit information</span>
         </div>
       </div>
+
+      <div ng-repeat="arriveitem in arriveNavItem ">
+          <p >You are arrive {{arriveitem.name? arriveitem.name:"anonymous"}} in this zone </p>
+      </div>
+
 
 
       <div class="fullscreenDialog" ng-if="adminLogin" >
@@ -252,7 +285,6 @@
 
             <p>{{loginStatus? loginStatus : ""}}</p>
             <label>ADMIN CODE</label>
-
             <input type="text" class="form-control" ng-model="pin" /><br/>
             <button class="btn btn-success" ng-click="adminLoginSubmit(pin)">submit</button>
             <button class="btn btn-default" ng-click="cancle(adminLogin)">cancle</button><br/>
