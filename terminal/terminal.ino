@@ -12,13 +12,13 @@
 #define MODULEADDRLENGTH 20
 
 // Update these with values suitable for your network.
-byte mac[] = {  0xDE, 0xED, 0xBA, 0xFE, 0xFE, 0xED };
-IPAddress server(172, 30, 88, 101);
+byte mac[] = {  0xDE, 0xED, 0xBA, 0xFE, 0xFE, 0xEA };
+char deviceName[] = "sv-terminal-zone-A";
+String zone = "A";
+IPAddress server(172, 30, 88, 12);
 
 EthernetClient ethClient;
 PubSubClient client(ethClient);
-
-String zone = "A";
 
 String inputString = "";
 boolean stringNotComplete = true;
@@ -116,7 +116,7 @@ int CheckDistance(String DiscoveredDevice) {
   }else if(distance < 0){
     proximity = -1;
   }else{
-    proximity = 2;
+    proximity = 9;
   }
   
   return proximity;  
@@ -131,7 +131,7 @@ String CheckType(String DiscoveredDevice) {
   }else if(temp == "0001") {
     type = "1";
   }else {
-    type = "3";
+    type = "9";
   }
   return type;  
 }
@@ -194,7 +194,7 @@ void reconnect() {
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
-    if (client.connect("arduinoClient")) {
+    if (client.connect(deviceName)) {
       Serial.println("connected");
       // Once connected, publish an announcement...
       client.publish("outTopic","hello world");
