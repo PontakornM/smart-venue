@@ -12,9 +12,9 @@
 #define MODULEADDRLENGTH 20
 
 // Update these with values suitable for your network.
-byte mac[] = {  0xDE, 0xED, 0xBA, 0xFE, 0xFE, 0xEA };
-char deviceName[] = "sv-terminal-zone-A";
-String zone = "A";
+byte mac[] = {  0xDE, 0xED, 0xBA, 0xFE, 0xFE, 0xEB };
+char deviceName[] = "sv-terminal-zone-B";
+String zone = "B";
 IPAddress server(172, 30, 88, 12);
 
 EthernetClient ethClient;
@@ -107,14 +107,14 @@ int CheckDistance(String DiscoveredDevice) {
   temp = DiscoveredDevice.substring(RSSIPOS, 70);
   int rssi = temp.toInt();
 
-  int distance = rssi - MeasuredPower;
+  int distance = MeasuredPower - rssi;
   
-  if(distance > 0){
-    proximity = 1;
+  if(distance < 0){
+    proximity = -1;
   }else if(distance == 0){
     proximity = 0;
-  }else if(distance < 0){
-    proximity = -1;
+  }else if(distance > 0){
+    proximity = 1;
   }else{
     proximity = 9;
   }
