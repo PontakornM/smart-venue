@@ -93,15 +93,20 @@ function update_reg (req){
     //determine zone
     db.registrar.findOne({uuid:req.uuid},function(err,doc){
         console.log('Doc : '+doc.uuid+' ,Zone : ' + doc.zone + ' ,Prox : ' + doc.proximity);
-        console.log('Reg : '+req.uuid+' ,Zone : '+ req.zone + ' ,Prox : ' + req.proximity);
-        if(req.zone != doc.zone && ((req.proximity == 1 && doc.proximity == 1 )|| doc.proximity < 1)){
+        console.log('Reg : '+req.uuid+' ,Zone : ' + req.zone + ' ,Prox : ' + req.proximity);
+        // determine zone
+        if( req.admin != true && req.zone != doc.zone && ((req.proximity == 1 && doc.proximity == 1 )|| doc.proximity < 1)){
                 console.log('Ignore Updating data....!!!');
+                req.zone = doc.zone;
         }
-         else if(req.zone == doc.zone || (req.zone != doc.zone && doc.proximity == 1  && req.proximity < 1) || req.admin == true){ 
+        //  else if(req.zone == doc.zone || (req.zone != doc.zone && doc.proximity == 1  && req.proximity < 1) || req.admin == true){ 
+
             req.timestamp = moment().format();
+            // determine expire session for user and admin
             if(!req.admin)
                 req.expire = moment().add(10,'s').format();
             else  req.expire = moment().add(10,'m').format();
+            
             db.registrar.findAndModify({
                 query: { uuid: req.uuid },
                 update: { $set: _.omit(req,"uuid") },
@@ -113,8 +118,7 @@ function update_reg (req){
                         io.emit('checkUpdate',doc);
                     }
                 });
-        }
-        else console.log('others case');
+        // }
     }); 
 }
 
@@ -179,11 +183,8 @@ function proc_json(json){
             expire : moment().add(10,'s').format(),
             zone : json.zone,
             proximity : parseInt(json.proximity[len]),
-            type : parseInt(json.type[len]),   // o --> dynamic  & 1 --> static
-            security : "No",
-            admin : false
+            type : parseInt(json.type[len])   // o --> dynamic  & 1 --> static
         };
-        if(json.type[len] == '1') temp.security = 'Yes';
         // console.log('len : ' + len );
         // console.log('temp => ',temp);
         // console.log('json _'+len+' ',temp);
@@ -195,22 +196,11 @@ function proc_json(json){
 
 //check expire ble session
 function check_expire_session(){
-    
+     
     db.registrar.find({expire: {$lt: moment().format()}},function (err, doc) {
-        if (doc) {
-            console.log('SessionExpire : '+ doc.uuid);
-            console.log(doc);
+            console.log('SessionExpire : ',doc);
             io.emit('SessionExpire',doc);
-        }
     });
-    db.registrar.find(function (err, docs) {
-              if(err) console.log("Registrar Error Message : " + err);
-              else {
-                  console.log('Sending DataService....');
-                  io.emit('DataService',docs);
-               }
-        });
-    
 }
 
 // testing database
