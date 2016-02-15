@@ -1,5 +1,5 @@
 
-var dbSocket = require('socket.io-client').connect("http://172.30.80.123:9000");
+var dbSocket = require('socket.io-client').connect("http://172.30.89.223:9000");
 
 var express = require('express');
 var moment = require('moment');
@@ -16,7 +16,7 @@ var itemData;
 var watchList = [];
 
 var log4js = require('log4js');
-var logger = log4js.getLogger();
+var logger = log4js.getLogger('SmartVenue');
 
 var securityTimeout;
 var securityInterval;
@@ -26,23 +26,36 @@ var navItem = [];
 dbSocket.on('DataService', function(data){
   // logger.debug(data);
   totalData = data;
-});
+  // if(user){
+  //   itemData = _.filter(totalData,function(item){ return item.type == 1;} );
+  //   socket.emit('SearchData',{searchData: totalData});
+  // }
 
+});
+var disableSecurity  = true;
 var setID = function(socket){
 
     socket.on('setID', function(data){
 
+      socket.emit("initialDisable",{check : disableSecurity});
 
       user = _.find(totalData,function(item){ return item.uuid == data.uuid;});
       logger.debug("user",user);
-      console.log(user);
       if(user){
         dbSocket.emit('UpdateDataService',{uuid: data.uuid, socketID: socket.id});
+        socket.on('ClearWatchList',function(data){
+          if(!data.check){
+            watchList = [];
+            io.emit('alarm', {alarm: false, items: []});
+          }
+          disableSecurity = data.check;
+          logger.debug("ClearWatchList: ", disableSecurity);
+        });
 
         socket.emit('User',{user: user});
         itemData = _.filter(totalData,function(item){ return item.type == 1;} );
         // logger.debug("itemData",itemData);
-        socket.emit('SearchData',{searchData: totalData});
+        socket.emit('SearchData',{searchData: itemData});
 
         socket.on('collectNavItem',function(data){
           logger.debug(_.findIndex(navItem,{uuid:data.uuid}),data.uuid);
@@ -59,6 +72,7 @@ var setID = function(socket){
     });
 
     socket.on('updateItem', function(data){
+      logger.debug(data);
       dbSocket.emit('UpdateDataService',data);
     });
 
@@ -76,16 +90,18 @@ dbSocket.on('checkUpdate', function(data){
         adminAble(user.admin);
         checkNavigate();
         io.emit('User',{user: user});
+        // io.emit('SearchData',{searchData: totalData});
+
     }
     else{
         var indexOfItem = _.findIndex(totalData, function(item){
                                 return item.uuid == data.uuid;
                             });
-        logger.debug(totalData+indexOfItem);
+        // logger.debug(totalData+indexOfItem);
         var tmp = totalData[indexOfItem];
         totalData[indexOfItem] = data;
         itemData = _.filter(totalData,function(item){ return item.type == 1;} );
-        io.emit('SearchData',{searchData: totalData});
+        io.emit('SearchData',{searchData: itemData});
 
 
         if(data.security == 'Yes')
@@ -108,16 +124,53 @@ dbSocket.on('checkNew',function(data){
       logger.debug(data);
       totalData.push(data);
       itemData = _.filter(totalData,function(item){ return item.type == 1;} );
-      io.emit('SearchData',{searchData: totalData});
+      io.emit('SearchData',{searchData: itemData});
 })
 
+var diffSessionData = [];
 
+dbSocket.on('SessionExpire',function(data){
+
+  // logger.debug("SessionExpire",data);
+  if(data.length > 0 && disableSecurity){
+
+    // if(diffSessionData.length > 0){
+    //   var diff = _.difference(data,diffSessionData);
+    //   diff.forEach(function(element, index, array){
+    //     if(_.findIndex(watchList,{uuid:element.uuid}) >= 0){
+    //       watchList = _.reject(watchList,{uuid:element.uuid});
+    //     }
+    //   })
+    //   diffSessionData = [];
+    // }
+
+
+    data.forEach(function(element, index, array){
+      if(element.type != 0 && element.uuid != undefined){
+        var id = _.findIndex(watchList,{uuid:element.uuid});
+        if(id < 0 &&  element.security == 'Yes'){
+          watchList.push(element);
+          // diffSessionData.push(element);
+          if(user){
+            adminAble(user.admin);
+          }
+        }
+        // logger.debug("current",watchList);
+      }
+    });
+
+
+
+  }
+
+
+});
 
 var checkSecurity = function(watchItem, curItem){
   var indexOfWatch = _.findIndex(watchList, function(item){ return item.uuid == watchItem.uuid;});
 
   if(indexOfWatch < 0){
-    if(watchItem.zone != curItem.zone)
+    if(watchItem.zone != curItem.zone && disableSecurity)
       watchList.push(watchItem);
   }
   else {
@@ -156,8 +209,7 @@ var adminAble = function(admin){
        securityInterval = setInterval(function(){
           // logger.debug(watchList.length);
           if(watchList.length < 1){
-
-              io.emit('alarm', {alarm: false, items: []});
+            // io.emit('alarm', {alarm: false, items: []});
           }
           else{
             logger.debug("Start: securityTimeout");
@@ -170,7 +222,7 @@ var adminAble = function(admin){
 
       clearInterval(securityInterval);
       securityInterval = null;
-      io.emit('alarm', {alarm: false, items: []});
+      // io.emit('alarm', {alarm: false, items: []});
     }
 }
 

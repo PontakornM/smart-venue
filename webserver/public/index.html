@@ -160,11 +160,16 @@
             </div>
           </form>
 
-          <div class="navbar-form nav navbar-nav navbar-right" >
-            <button class="btn btn-primary" ng-click="dialogLogin()" ng-if="!user.admin">Admin Login</button>
-            <button class="btn btn-danger" ng-click="dialogLogout()"  ng-if="user.admin">Logout</button>
-          </div>
 
+          <div class="navbar-form nav navbar-nav navbar-right" >
+
+            <button class="btn btn-primary" ng-click="dialogLogin()" ng-if="!user.admin">Admin Login</button>
+            <div ng-if="user.admin">
+              <button class="btn btn-warning" ng-click="clearWatchList(true)" ng-if="!disableSecurity">Disable Security</button>
+              <button class="btn btn-info" ng-click="clearWatchList(false)" ng-if="disableSecurity">Enable Security</button>
+              <button class="btn btn-danger" ng-click="dialogLogout()"  >Logout</button>
+            </div>
+          </div>
 
         </div><!-- /.navbar-collapse -->
       </div><!-- /.container-fluid -->
@@ -175,8 +180,12 @@
       <h4>{{node.name? node.name:node.uuid}} is lost from {{node.zone}}</h4>
     </div>
 
-    <div ng-repeat="navitem in navItem" style="margin-bottom:10px;background:#F64747;color:white;text-align:center;" >
-      <span >{{navitem.name? navitem.name:"anonymous"}} go on Zone {{navitem.zone}}</span><b style="float:right;margin-right:10px;" ng-click="cancleNavigate(navitem)">x</b>
+    <div ng-repeat="navitem in navItem" style="margin-bottom:10px;background:#03C9A9;text-align:center;" >
+      <b style="color:#1E824C;" >{{navitem.name? navitem.name:"anonymous"}} go on Zone {{navitem.zone}}</b><b style="color:#ECECEC;float:right;margin-right:10px;" ng-click="cancleNavigate(navitem)">x</b>
+    </div>
+
+    <div ng-repeat="arriveitem in arriveNavItem " style="margin-bottom:10px;background:#FDE3A7;color:#6C7A89;text-align:center;" >
+        <b >You are arrive {{arriveitem.name? arriveitem.name:"anonymous"}} in this zone </b>
     </div>
 
     <div id="searchTextResults" ng-class="{searchDisplay:!searchText }">
@@ -203,7 +212,8 @@
             <div style="height:150px;overflow-y:auto;margin-top:10px;">
               <div ng-repeat="nodes in presentData.A" ng-if="presentData.A.length"  ng-class="{zoneDisplay: 'A' != user.zone,adminDisplay: user.admin}">
                 <div class="item" ng-click="showing(nodes)" >
-                  <b >{{nodes.name? nodes.name:nodes.uuid}}</b><b>&nbsp;&nbsp;&nbsp;type: {{nodes.type}}</b>
+                  <b >{{nodes.name? nodes.name:nodes.uuid}}</b>
+                  <!-- <b>&nbsp;&nbsp;&nbsp;type: {{nodes.type}}</b> -->
                 </div>
               </div>
             </div>
@@ -213,7 +223,8 @@
             <div style="height:150px;overflow-y:auto;margin-top:10px;">
               <div ng-repeat="nodes in presentData.B" ng-if="presentData.B.length" ng-class="{zoneDisplay: 'B' != user.zone,adminDisplay: user.admin}">
                 <div class="item " ng-click="showing(nodes)">
-                  <b >{{nodes.name? nodes.name:nodes.uuid}}</b><b>&nbsp;&nbsp;&nbsp;type: {{nodes.type}}</b>
+                  <b >{{nodes.name? nodes.name:nodes.uuid}}</b>
+                  <!-- <b>&nbsp;&nbsp;&nbsp;type: {{nodes.type}}</b> -->
                 </div>
               </div>
             </div>
@@ -227,7 +238,8 @@
             <div style="height:150px;overflow-y:auto;margin-top:10px;">
               <div ng-repeat="nodes in presentData.C" ng-if="presentData.C.length" ng-class="{zoneDisplay: 'C' != user.zone,adminDisplay: user.admin}">
                 <div class="item " ng-click="showing(nodes)">
-                  <b >{{nodes.name? nodes.name:nodes.uuid}}</b><b>&nbsp;&nbsp;&nbsp;type: {{nodes.type}}</b>
+                  <b >{{nodes.name? nodes.name:nodes.uuid}}</b>
+                  <!-- <b>&nbsp;&nbsp;&nbsp;type: {{nodes.type}}</b> -->
                 </div>
               </div>
             </div>
@@ -237,7 +249,8 @@
             <div style="height:150px;overflow-y:auto;margin-top:10px;">
               <div ng-repeat="nodes in presentData.D" ng-if="presentData.D.length" ng-class="{zoneDisplay: 'D' != user.zone,adminDisplay: user.admin}">
                 <div class="item " ng-click="showing(nodes)">
-                  <b >{{nodes.name? nodes.name:nodes.uuid}}</b><b>&nbsp;&nbsp;&nbsp;type: {{nodes.type}}</b>
+                  <b >{{nodes.name? nodes.name:nodes.uuid}}</b>
+                  <!-- <b>&nbsp;&nbsp;&nbsp;type: {{nodes.type}}</b> -->
                 </div>
               </div>
             </div>
@@ -274,9 +287,7 @@
         </div>
       </div>
 
-      <div ng-repeat="arriveitem in arriveNavItem ">
-          <p >You are arrive {{arriveitem.name? arriveitem.name:"anonymous"}} in this zone </p>
-      </div>
+
 
 
 

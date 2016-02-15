@@ -15,7 +15,7 @@ App
      return mySocket;
   })
 
-  .controller('AppEngineController', function($scope, socket){
+  .controller('AppEngineController', function($scope, socket,$timeout){
 
     var pinLogin = "xxx1";
     $scope.searchText = "";
@@ -46,8 +46,8 @@ App
                             });
 
       $scope.presentData = _.groupBy(data.searchData,'zone');
-      console.log($scope.presentData);
-      console.log($scope.searchData);
+      // console.log($scope.presentData);
+      // console.log($scope.searchData);
     })
 
     socket.on('alarm', function(data){
@@ -87,7 +87,11 @@ App
     socket.on('arriveNavItem',function(data){
       $scope.navItem = _.reject($scope.navItem,{uuid : data.uuid});
       $scope.arriveNavItem.push(data);
-      setTimeout(function(){$scope.arriveNavItem = _.reject(this,{uuid : data.uuid})},3000);
+      $timeout(function(){
+        $scope.arriveNavItem = _.reject($scope.arriveNavItem,{uuid : data.uuid});
+        console.log( data.uuid,   $scope.arriveNavItem);
+      },3000)
+
     })
 
     $scope.cancleNavigate = function(cancleItem){
@@ -141,9 +145,16 @@ App
         $scope.showItem = {};
       }
     }
+    socket.on("initialDisable",function(data){
+      $scope.disableSecurity = data.check;
+    })
+    $scope.clearWatchList = function(boolean){
+      socket.emit("ClearWatchList",{check:boolean});
+      $scope.disableSecurity = boolean;
+    }
 
     $scope.updateItem = function(name,description,security){
-      // console.log(security);
+      console.log(security);
 
       socket.emit('updateItem',{uuid:$scope.editItem.uuid, name:name, description:description, security:security});
       $scope.editItem = null;
