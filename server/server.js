@@ -11,7 +11,7 @@ var io = require('socket.io')(server);
 
 // MQTT -- Arduino to Server
 var mqtt = require('mqtt');
-var client = mqtt.connect('mqtt://localhost');
+var client = mqtt.connect('mqtt://172.30.80.182');
 
 // time lib
 var moment = require('moment');
@@ -127,7 +127,7 @@ function add_newreg (data){
     var temp = {
         uuid : data.uuid,
         timestamp : moment().format(),
-        expire : moment().add(10,'s').format(),
+        expire : moment().add(5,'s').format(),
         zone : data.zone,
         proximity : parseInt(data.proximity),
         type : parseInt(data.type),   // o --> dynamic  & 1 --> static
@@ -180,7 +180,7 @@ function proc_json(json){
         temp = {
             uuid : json.uuid[len],
             timestamp : moment().format(),
-            expire : moment().add(10,'s').format(),
+            expire : moment().add(5,'s').format(),
             zone : json.zone,
             proximity : parseInt(json.proximity[len]),
             type : parseInt(json.type[len])   // o --> dynamic  & 1 --> static
