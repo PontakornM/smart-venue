@@ -3,7 +3,7 @@ var databases = '172.30.80.56:27017/svdb';
 var collection = 'registar';
 // var express = require('express');
 // var server = require('http').Server(app);
-var socket = require('socket.io-client').connect('http://172.30.89.223:9000');
+var socket = require('socket.io-client').connect('http://172.30.88.96:9000');
 
 
 socket.on('DataService',function(docs){

@@ -17,7 +17,7 @@ App
 
   .controller('AppEngineController', function($scope, socket,$timeout){
 
-    var pinLogin = "xxx1";
+    var pinLogin = "X";
     $scope.searchText = "";
     socket.on('User', function(data){
       $scope.user = data.user;
@@ -148,10 +148,12 @@ App
     socket.on("initialDisable",function(data){
       $scope.disableSecurity = data.check;
     })
+
     $scope.clearWatchList = function(boolean){
       socket.emit("ClearWatchList",{check:boolean});
-      $scope.disableSecurity = boolean;
+      // $scope.disableSecurity = boolean;
     }
+
 
     $scope.updateItem = function(name,description,security){
       console.log(security);

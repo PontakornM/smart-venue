@@ -1,5 +1,5 @@
 
-var dbSocket = require('socket.io-client').connect("http://172.30.89.223:9000");
+var dbSocket = require('socket.io-client').connect("http://172.30.88.96:9000");
 
 var express = require('express');
 var moment = require('moment');
@@ -37,8 +37,6 @@ var setID = function(socket){
 
     socket.on('setID', function(data){
 
-      socket.emit("initialDisable",{check : disableSecurity});
-
       user = _.find(totalData,function(item){ return item.uuid == data.uuid;});
       logger.debug("user",user);
       if(user){
@@ -49,6 +47,7 @@ var setID = function(socket){
             io.emit('alarm', {alarm: false, items: []});
           }
           disableSecurity = data.check;
+          socket.emit("initialDisable",{check : disableSecurity});
           logger.debug("ClearWatchList: ", disableSecurity);
         });
 
@@ -73,14 +72,21 @@ var setID = function(socket){
 
     socket.on('updateItem', function(data){
       logger.debug(data);
+      if(data.admin == false){
+         disableSecurity  = false;
+      }
+
+
+
       dbSocket.emit('UpdateDataService',data);
+
     });
 
 
 }
 
 dbSocket.on('checkUpdate', function(data){
-    logger.debug(data);
+    // logger.debug(data);
     var checkUser;
     if(user)
       checkUser = data.uuid == user.uuid ? true : false;
@@ -103,20 +109,14 @@ dbSocket.on('checkUpdate', function(data){
         itemData = _.filter(totalData,function(item){ return item.type == 1;} );
         io.emit('SearchData',{searchData: itemData});
 
-
-        if(data.security == 'Yes')
+        // if(data.uuid == '5AFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'){
+        //     dbSocket.emit('UpdateDataService',{uuid:'5AFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF',name:'iPhone'});
+        // }
+        if(tmp.zone != data.zone && data.security == 'Yes'){
+          logger.debug("security !!!!",tmp.zone , data.zone);
           checkSecurity(tmp , data);
-        else{
-
-          var indexOfWatch = _.findIndex(watchList, function(item){ return item.uuid == data.uuid;});
-          logger.debug(data.security,indexOfWatch);
-          if(indexOfWatch >= 0){
-            watchList = _.reject(watchList,function(item){return item.uuid == data.uuid;});
-            clearInterval(securityInterval);
-            securityInterval = null;
-            io.emit('alarm', {alarm: false, items: []});
-          }
         }
+
     }
 });
 
@@ -133,17 +133,6 @@ dbSocket.on('SessionExpire',function(data){
 
   // logger.debug("SessionExpire",data);
   if(data.length > 0 && disableSecurity){
-
-    // if(diffSessionData.length > 0){
-    //   var diff = _.difference(data,diffSessionData);
-    //   diff.forEach(function(element, index, array){
-    //     if(_.findIndex(watchList,{uuid:element.uuid}) >= 0){
-    //       watchList = _.reject(watchList,{uuid:element.uuid});
-    //     }
-    //   })
-    //   diffSessionData = [];
-    // }
-
 
     data.forEach(function(element, index, array){
       if(element.type != 0 && element.uuid != undefined){
@@ -168,16 +157,14 @@ dbSocket.on('SessionExpire',function(data){
 
 var checkSecurity = function(watchItem, curItem){
   var indexOfWatch = _.findIndex(watchList, function(item){ return item.uuid == watchItem.uuid;});
-
-  if(indexOfWatch < 0){
-    if(watchItem.zone != curItem.zone && disableSecurity)
+  logger.debug("uuid !!!!",curItem.uuid);
+  if(indexOfWatch < 0 && disableSecurity){
       watchList.push(watchItem);
+      logger.debug('watchList ++++', watchList );
+      if(user)
+      adminAble(user.admin);
   }
-  else {
-    logger.debug("checkSecurity",indexOfWatch , watchList[indexOfWatch].zone,curItem.zone);
-    watchList = _.filter(watchList,function(item){return item.uuid != curItem.uuid; });
-    logger.debug(watchList);
-  }
+
 }
 
 var checkNavigate = function(){
@@ -199,15 +186,15 @@ var checkNavigate = function(){
 var dynamicItem;
 
 var adminAble = function(admin){
-    // logger.debug(admin);
+    logger.debug(admin);
 
     if(admin){
       dynamicItem = _.filter(totalData,function(item){return item.type == 0;});
-      logger.debug('dynamic',dynamicItem);
+      // logger.debug('dynamic',dynamicItem);
       io.emit('NumberPeople',{people: dynamicItem });
       if(!securityInterval)
        securityInterval = setInterval(function(){
-          // logger.debug(watchList.length);
+          logger.debug(watchList.length);
           if(watchList.length < 1){
             // io.emit('alarm', {alarm: false, items: []});
           }
@@ -215,7 +202,7 @@ var adminAble = function(admin){
             logger.debug("Start: securityTimeout");
             io.emit('alarm', {alarm: true, items: watchList});
           }
-      },5000)
+      },3000)
 
     }
     else{
@@ -231,6 +218,7 @@ app.use(express.static('public'));
 
 io.on('connection', function(socket){
   logger.info("io conneted");
+  socket.emit("initialDisable",{check : disableSecurity});
   // logger.info(socket);
   setID(socket);
 });
