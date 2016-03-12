@@ -11,7 +11,7 @@ var io = require('socket.io')(server);
 
 // MQTT -- Arduino to Server
 var mqtt = require('mqtt');
-var client = mqtt.connect('mqtt://172.30.80.182');
+var client = mqtt.connect('mqtt://localhost');
 
 // time lib
 var moment = require('moment');
@@ -83,7 +83,7 @@ function check_reg (data){
             }
         }
     });
-    
+
 }
 
 
@@ -99,14 +99,14 @@ function update_reg (req){
                 console.log('Ignore Updating data....!!!');
                 req.zone = doc.zone;
         }
-        //  else if(req.zone == doc.zone || (req.zone != doc.zone && doc.proximity == 1  && req.proximity < 1) || req.admin == true){ 
+        //  else if(req.zone == doc.zone || (req.zone != doc.zone && doc.proximity == 1  && req.proximity < 1) || req.admin == true){
 
             req.timestamp = moment().format();
             // determine expire session for user and admin
             if(!req.admin)
                 req.expire = moment().add(10,'s').format();
             else  req.expire = moment().add(10,'m').format();
-            
+
             db.registrar.findAndModify({
                 query: { uuid: req.uuid },
                 update: { $set: _.omit(req,"uuid") },
@@ -119,13 +119,17 @@ function update_reg (req){
                     }
                 });
         // }
-    }); 
+    });
 }
 
 // add new element
 function add_newreg (data){
     var temp = {
         uuid : data.uuid,
+        title: data.title,
+        description: data.description,
+        painter:data.painter,
+        img:data.img,
         timestamp : moment().format(),
         expire : moment().add(5,'s').format(),
         zone : data.zone,
@@ -134,7 +138,7 @@ function add_newreg (data){
         security : "No",
         admin : false
     };
-    if(data.type == '1') temp.security = "Yes";
+    // if(data.type == '1') temp.security = "Yes";
     db.registrar.insert(temp,function(err,doc){
         if(err) console.log('Add New Reg Error : '+ err);
         else {
@@ -147,7 +151,8 @@ function add_newreg (data){
 // check data Integrity
 function check_err(data){
     if(parseInt(data.uuid) == 0) return true;
-    if(data.uuid == undefined || data.zone == undefined || data.type == undefined || data.proximity == undefined || data.type == '9' || data.proximity == 9) {
+    // || data.zone == undefined
+    if(data.uuid == undefined || data.type == undefined || data.proximity == undefined || data.type == '9' || data.proximity == 9) {
          console.log('Err Format Data : ' , data);
         return true;
     }
@@ -196,7 +201,7 @@ function proc_json(json){
 
 //check expire ble session
 function check_expire_session(){
-     
+
     db.registrar.find({expire: {$lt: moment().format()}},function (err, doc) {
             console.log('SessionExpire : ',doc);
             io.emit('SessionExpire',doc);

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html ng-app="webApp">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=320, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <title>Smart Venue</title>
+    <script type="text/javascript" src="lib/angular/angular.js"></script>
+    <script type="text/javascript" src="lib/angular-socket-io/socket.js"></script>
+    <script type="text/javascript" src="lib/socket.io-client/socket.io.js"></script>
+    <script type="text/javascript" src="lib/underscore/underscore.js"></script>
+
+    <script src="/lib/jquery/dist/jquery.js"></script>
+    <script src="/lib/bootstrap/dist/js/bootstrap.js"></script>
+    <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.css" media="screen" title="no title" charset="utf-8">
+
+    <script type="text/javascript" src="app.js"></script>
+    <script type="text/javascript" src="scripts/AppEngineController.js"></script>
+    <style media="screen">
+      .zoneDisplay {
+          display:none;
+      }
+      .iconSearch{
+        margin-top:10px;
+        margin-right:10px;
+      }
+
+      .searchDisplay{
+        display: none;
+      }
+      .searchItem{
+        background:#019875;
+        color:#ECF0F1;
+        padding:20px;
+        margin:10px;
+        width:200px;
+        text-align:center;
+      }
+      #searchTextResults{
+        position:absolute;
+        background:rgba(44, 62, 80,.7);
+        z-index:10;
+        top:55px;
+        width:100%;
+        height:700px;
+        overflow-y:auto;
+      }
+      @media (max-width:700px) {
+          #searchTextResults{
+            top:30%;
+          }
+      }
+      .adminDisplay{
+        display: block !important;
+      }
+      .edit-true {
+        display: block;
+      }
+      .edit-false {
+        display: none;
+      }
+      .navbar-collapse{
+        text-align:center;
+      }
+      .adminStatus{
+        padding:5px;
+        color:white;
+        background:#1abc9c;
+        border-radius:5px;
+      }
+      .zoneBG{
+        background:#3498db;
+        border: 3px #2980b9 solid;
+        height:200px;
+        border-radius:10px;
+      }
+      .fullscreenDialog{
+        text-align:center;
+        padding-top:100px;
+        position:fixed;
+        top:0px;
+        left:0px;
+        width:100%;
+        height:100%;
+        background:rgba(44, 62, 80,.7);
+        z-index:100;
+      }
+      .innerDialog{
+        text-align:center;
+        color:white;
+        background:rgba(52, 73, 94,1.0);
+        border-radius:5px;
+        padding:20px;
+      }
+      body{
+        overflow:hidden;
+      }
+      .item{
+        background:rgba(236, 240, 241,.5);
+        margin-top:3px;
+        padding:4px;
+        color:#34495e;
+        text-align:center;;
+        overflow:hidden;
+      }
+      .item:hover{
+        background:rgba(236, 240, 241,.9);
+      }
+      .itemName{
+        margin-top:5px;
+      }
+      .zoneBG > h4{
+        color:#ecf0f1;
+      }
+      .span-btn-primary{
+        padding:5px;
+        color:white;
+        background:#2980b9;
+        border-radius:5px;
+        cursor: pointer;
+        display: block;
+        margin:10px;
+      }
+      .span-btn-primary:hover{
+        background:#446CB3;
+      }
+
+      .span-btn-info{
+        padding:5px;
+        color:white;
+        background:#4ECDC4;
+        border-radius:5px;
+        cursor: default;
+      }
+
+    </style>
+  </head>
+  <body ng-controller = "AppEngineController" >
+    <nav class="navbar navbar-default">
+      <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Smart Venue</a>
+        </div>
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+
+          <form class="navbar-form navbar-left ">
+            <div class="form-group">
+
+              <span class="glyphicon glyphicon-search iconSearch" ></span>
+              <b>SEARCH&nbsp;&nbsp;</b>
+
+              <input placeholder="search item in venue ... " type="text" class="form-control inputSearch" ng-model="searchText">
+            </div>
+          </form>
+
+
+          <div class="navbar-form nav navbar-nav navbar-right" >
+
+            <button class="btn btn-primary" ng-click="dialogLogin()" ng-if="!user.admin">Admin Login</button>
+            <div ng-if="user.admin">
+              <button class="btn btn-warning" ng-click="clearWatchList(true)" ng-if="!disableSecurity">Disable Security</button>
+              <button class="btn btn-info" ng-click="clearWatchList(false)" ng-if="disableSecurity">Enable Security</button>
+              <button class="btn btn-danger" ng-click="dialogLogout()"  >Logout</button>
+            </div>
+          </div>
+
+        </div><!-- /.navbar-collapse -->
+      </div><!-- /.container-fluid -->
+    </nav>
+
+
+    <div ng-repeat="node in watchList"  style="background:#F64747;padding:8px;color:white;text-align:center;" >
+      <h4>{{node.name? node.name:node.uuid}} is lost from {{node.zone}}</h4>
+    </div>
+
+    <div ng-repeat="navitem in navItem" style="margin-bottom:10px;background:#03C9A9;text-align:center;" >
+      <b style="color:#1E824C;" >{{navitem.name? navitem.name:"anonymous"}} go on Zone {{navitem.zone}}</b><b style="color:#ECECEC;float:right;margin-right:10px;" ng-click="cancleNavigate(navitem)">x</b>
+    </div>
+
+    <div ng-repeat="arriveitem in arriveNavItem " style="margin-bottom:10px;background:#FDE3A7;color:#6C7A89;text-align:center;" >
+        <b >You are arrive {{arriveitem.name? arriveitem.name:"anonymous"}} in this zone </b>
+    </div>
+
+    <div id="searchTextResults" ng-class="{searchDisplay:!searchText }">
+      <div ng-repeat="node in searchData | filter: searchText "  class="col-xs-offset-2  col-md-offset-5">
+        <div class="searchItem">
+          <span style="font-size:18px;"><b>{{node.name? node.name:"Anonymous"}}</b> is in zone <b>{{node.zone}}</b></span>
+            <span class="span-btn-primary" ng-click="navigate(node)">navigate</span>
+        </div>
+      </div>
+    </div>
+
+
+    <div >
+      <div style="text-align:center;">
+        <b> You're in  <span style="font-size:25px;">zone {{user.zone}}</span> <br/> <span class="adminStatus" ng-if="user.admin">admin mode</span></b>
+        <h3 ng-if="user.admin">{{numberPeople}} {{numberPeople <= 1? "person":"people"}} in your venue</h3>
+      </div>
+
+      <div style="background:rgba(41, 128, 185,1.0);width:100%;padding-bottom:1%;padding-top:1%;padding-left:10%;padding-right:10%;">
+      <div class="row" style="text-align:center;">
+
+          <div class="col-xs-6 zoneBG" >
+            <h4 >ZONE A</h4><span class="span-btn-info" ng-if="false">{{presentData.A.count}} {{ presentData.A.count >1? "people":"person"}} </span>
+            <div style="height:150px;overflow-y:auto;margin-top:10px;">
+              <div ng-repeat="nodes in presentData.A" ng-if="presentData.A.length"  ng-class="{zoneDisplay: 'A' != user.zone,adminDisplay: user.admin}">
+                <div class="item" ng-click="showing(nodes)" >
+                  <b >{{nodes.name? nodes.name:nodes.uuid}}</b>
+                  <!-- <b>&nbsp;&nbsp;&nbsp;type: {{nodes.type}}</b> -->
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xs-6 zoneBG">
+            <h4 >ZONE B</h4><span class="span-btn-info" ng-if="false">{{presentData.B.count}} {{ presentData.B.count >1? "people":"person"}} </span>
+            <div style="height:150px;overflow-y:auto;margin-top:10px;">
+              <div ng-repeat="nodes in presentData.B" ng-if="presentData.B.length" ng-class="{zoneDisplay: 'B' != user.zone,adminDisplay: user.admin}">
+                <div class="item " ng-click="showing(nodes)">
+                  <b >{{nodes.name? nodes.name:nodes.uuid}}</b>
+                  <!-- <b>&nbsp;&nbsp;&nbsp;type: {{nodes.type}}</b> -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="row" style="text-align:center;">
+          <div class="col-xs-6 zoneBG">
+            <h4 >ZONE C</h4><span class="span-btn-info" ng-if="false">{{presentData.C.count}} {{ presentData.C.count >1? "people":"person"}} </span>
+            <div style="height:150px;overflow-y:auto;margin-top:10px;">
+              <div ng-repeat="nodes in presentData.C" ng-if="presentData.C.length" ng-class="{zoneDisplay: 'C' != user.zone,adminDisplay: user.admin}">
+                <div class="item " ng-click="showing(nodes)">
+                  <b >{{nodes.name? nodes.name:nodes.uuid}}</b>
+                  <!-- <b>&nbsp;&nbsp;&nbsp;type: {{nodes.type}}</b> -->
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xs-6 zoneBG">
+            <h4 >ZONE D</h4><span class="span-btn-info" ng-if="false">{{presentData.D.count}} {{ presentData.D.count >1? "people":"person"}} </span>
+            <div style="height:150px;overflow-y:auto;margin-top:10px;">
+              <div ng-repeat="nodes in presentData.D" ng-if="presentData.D.length" ng-class="{zoneDisplay: 'D' != user.zone,adminDisplay: user.admin}">
+                <div class="item " ng-click="showing(nodes)">
+                  <b >{{nodes.name? nodes.name:nodes.uuid}}</b>
+                  <!-- <b>&nbsp;&nbsp;&nbsp;type: {{nodes.type}}</b> -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="fullscreenDialog" ng-if="editItem.uuid" ng-init="name = editItem.name; description = editItem.description; check = editItem.security ">
+        <div class="innerDialog col-md-4 col-md-offset-4" >
+          <p>uuid  {{editItem.uuid}}</p>
+          <label>name</label>
+          <input type="text" class="form-control" ng-model="name" /><br/>
+          <label>security</label><input type="checkbox" ng-model="check" ng-true-value="'Yes'" ng-false-value="'No'"><br/>
+          <label>description</label>
+          <textarea class="form-control" ng-model="description" /></textarea><br/>
+          <button class="btn btn-success" ng-click="updateItem(name,description,check)">submit</button>
+          <button class="btn btn-default" ng-click="cancle(editItem)">cancle</button>
+          <br/>
+        </div>
+      </div>
+
+      <div class="fullscreenDialog" ng-if="showItem.uuid">
+        <div class="innerDialog col-md-4 col-md-offset-4" >
+          <p style="position:absolute;top:0px;right:10px;cursor:pointer;" ng-click="cancle(showItem);">x</p>
+          <h3>{{showItem.name? showItem.name:showItem.uuid}}</h3>
+          <p>description</p>
+          <div ng-if="showItem.description" style="margin-bottom:10px;">
+            {{showItem.description}}
+          </div>
+          <span class="span-btn-primary" ng-click="navigate(showItem)">navigate</span>
+
+          <span class="span-btn-primary" ng-if="user.admin" ng-click="editing(showItem)">edit information</span>
+        </div>
+      </div>
+
+
+
+
+
+      <div class="fullscreenDialog" ng-if="adminLogin" >
+          <div class="innerDialog col-md-4 col-md-offset-4">
+
+            <p>{{loginStatus? loginStatus : ""}}</p>
+            <label>ADMIN CODE</label>
+            <input type="text" class="form-control" ng-model="pin" /><br/>
+            <button class="btn btn-success" ng-click="adminLoginSubmit(pin)">submit</button>
+            <button class="btn btn-default" ng-click="cancle(adminLogin)">cancle</button><br/>
+
+          </div>
+      </div>
+    </div>
+  </body>
+
+</html>

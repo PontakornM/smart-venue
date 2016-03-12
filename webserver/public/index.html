@@ -15,294 +15,281 @@
     <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.css" media="screen" title="no title" charset="utf-8">
 
     <script type="text/javascript" src="app.js"></script>
-    <script type="text/javascript" src="scripts/AppEngineController.js"></script>
-    <style media="screen">
-      .zoneDisplay {
-          display:none;
-      }
-      .iconSearch{
-        margin-top:10px;
-        margin-right:10px;
-      }
+    <script type="text/javascript" src="scripts/FinalController.js"></script>
 
-      .searchDisplay{
-        display: none;
-      }
-      .searchItem{
-        background:#019875;
-        color:#ECF0F1;
-        padding:20px;
-        margin:10px;
-        width:200px;
-        text-align:center;
-      }
-      #searchTextResults{
-        position:absolute;
-        background:rgba(44, 62, 80,.7);
-        z-index:10;
-        top:55px;
-        width:100%;
-        height:700px;
-        overflow-y:auto;
-      }
-      @media (max-width:700px) {
-          #searchTextResults{
-            top:30%;
-          }
-      }
-      .adminDisplay{
-        display: block !important;
-      }
-      .edit-true {
-        display: block;
-      }
-      .edit-false {
-        display: none;
-      }
-      .navbar-collapse{
-        text-align:center;
-      }
-      .adminStatus{
-        padding:5px;
-        color:white;
-        background:#1abc9c;
-        border-radius:5px;
-      }
-      .zoneBG{
-        background:#3498db;
-        border: 3px #2980b9 solid;
-        height:200px;
-        border-radius:10px;
-      }
-      .fullscreenDialog{
-        text-align:center;
-        padding-top:100px;
-        position:fixed;
-        top:0px;
-        left:0px;
-        width:100%;
-        height:100%;
-        background:rgba(44, 62, 80,.7);
-        z-index:100;
-      }
-      .innerDialog{
-        text-align:center;
-        color:white;
-        background:rgba(52, 73, 94,1.0);
-        border-radius:5px;
-        padding:20px;
-      }
-      body{
-        overflow:hidden;
-      }
-      .item{
-        background:rgba(236, 240, 241,.5);
-        margin-top:3px;
-        padding:4px;
-        color:#34495e;
-        text-align:center;;
-        overflow:hidden;
-      }
-      .item:hover{
-        background:rgba(236, 240, 241,.9);
-      }
-      .itemName{
-        margin-top:5px;
-      }
-      .zoneBG > h4{
-        color:#ecf0f1;
-      }
-      .span-btn-primary{
-        padding:5px;
-        color:white;
-        background:#2980b9;
-        border-radius:5px;
-        cursor: pointer;
-        display: block;
-        margin:10px;
-      }
-      .span-btn-primary:hover{
-        background:#446CB3;
-      }
-
-      .span-btn-info{
-        padding:5px;
-        color:white;
-        background:#4ECDC4;
-        border-radius:5px;
-        cursor: default;
-      }
-
-    </style>
+    <link rel="stylesheet" href="/style/app.css" media="screen" charset="utf-8">
   </head>
-  <body ng-controller = "AppEngineController" >
+
+  <body ng-controller = "FinalController" >
+    <!-- navbar -->
     <nav class="navbar navbar-default">
       <div class="container-fluid">
         <!-- Brand and toggle get grouped for better mobile display -->
         <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+          <!-- <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
             <span class="sr-only">Toggle navigation</span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="#">Smart Venue</a>
+          </button> -->
+
+            <!-- <a class="navbar-brand" href="#">Back</a> -->
+
         </div>
-        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <ul class="navbar-collapse">
+          <li class="nav navbar-nav" style="padding-top:0.5%;">
+             <h4 ng-if="!currentZone">Smart Venue</h4>
+             <h4 ng-if="currentZone">{{currentZone == 'Setting'? (admin? currentZone:"View All"):'Zone '+currentZone}} </h4>
+          </li>
 
-          <form class="navbar-form navbar-left ">
-            <div class="form-group">
+           <li  ng-if="currentZone" ng-click="backToMain()" class="nav navbar-nav"style="cursor:pointer;position:absolute;left:0px;margin-left:10px;padding-top:0.5%;">
+              <h4><span class="glyphicon glyphicon-menu-left"></span></h4>
+           </li>
+        </ul>
 
-              <span class="glyphicon glyphicon-search iconSearch" ></span>
-              <b>SEARCH&nbsp;&nbsp;</b>
-
-              <input placeholder="search item in venue ... " type="text" class="form-control inputSearch" ng-model="searchText">
-            </div>
-          </form>
-
-
-          <div class="navbar-form nav navbar-nav navbar-right" >
-
-            <button class="btn btn-primary" ng-click="dialogLogin()" ng-if="!user.admin">Admin Login</button>
-            <div ng-if="user.admin">
-              <button class="btn btn-warning" ng-click="clearWatchList(true)" ng-if="!disableSecurity">Disable Security</button>
-              <button class="btn btn-info" ng-click="clearWatchList(false)" ng-if="disableSecurity">Enable Security</button>
-              <button class="btn btn-danger" ng-click="dialogLogout()"  >Logout</button>
-            </div>
-          </div>
-
-        </div><!-- /.navbar-collapse -->
       </div><!-- /.container-fluid -->
     </nav>
 
-
-    <div ng-repeat="node in watchList"  style="background:#F64747;padding:8px;color:white;text-align:center;" >
-      <h4>{{node.name? node.name:node.uuid}} is lost from {{node.zone}}</h4>
-    </div>
-
-    <div ng-repeat="navitem in navItem" style="margin-bottom:10px;background:#03C9A9;text-align:center;" >
-      <b style="color:#1E824C;" >{{navitem.name? navitem.name:"anonymous"}} go on Zone {{navitem.zone}}</b><b style="color:#ECECEC;float:right;margin-right:10px;" ng-click="cancleNavigate(navitem)">x</b>
-    </div>
-
-    <div ng-repeat="arriveitem in arriveNavItem " style="margin-bottom:10px;background:#FDE3A7;color:#6C7A89;text-align:center;" >
-        <b >You are arrive {{arriveitem.name? arriveitem.name:"anonymous"}} in this zone </b>
-    </div>
-
-    <div id="searchTextResults" ng-class="{searchDisplay:!searchText }">
-      <div ng-repeat="node in searchData | filter: searchText "  class="col-xs-offset-2  col-md-offset-5">
-        <div class="searchItem">
-          <span style="font-size:18px;"><b>{{node.name? node.name:"Anonymous"}}</b> is in zone <b>{{node.zone}}</b></span>
-            <span class="span-btn-primary" ng-click="navigate(node)">navigate</span>
-        </div>
+    <!-- notification -->
+    <div class="notifContainer" ng-if="notifDialog.length>1">
+      <div class="dialog" ng-class="'bg-'+dialog.type" ng-repeat="dialog in notifDialog">
+        <button type="button" class="close" aria-label="Close" ng-click="closeDialog(this)"><span aria-hidden="true">&times;</span></button>
+        <h4>{{dialog.title}}</h4>
       </div>
+
     </div>
 
-
+    <!-- button row -->
     <div >
-      <div style="text-align:center;">
-        <b> You're in  <span style="font-size:25px;">zone {{user.zone}}</span> <br/> <span class="adminStatus" ng-if="user.admin">admin mode</span></b>
-        <h3 ng-if="user.admin">{{numberPeople}} {{numberPeople <= 1? "person":"people"}} in your venue</h3>
-      </div>
+      <div class="row buttonRow">
+        <span ng-if="admin">
+            <button class="btn btn-default" ng-click="selectSetting()">
+              <span class="glyphicon glyphicon-cog" ></span>
+               Setting
+            </button>
+            <button class="btn btn-success" ng-click="selectForm()">
+              <span class="glyphicon glyphicon-picture"></span>
+               Add new
+            </button>
+        </span>
+        <span ng-if="!admin">
+          <button class="btn btn-success" ng-click="selectSetting()">
+            <span class="glyphicon glyphicon-picture"></span>
+             View All
+          </button>
+        </span>
 
-      <div style="background:rgba(41, 128, 185,1.0);width:100%;padding-bottom:1%;padding-top:1%;padding-left:10%;padding-right:10%;">
-      <div class="row" style="text-align:center;">
+        <button class="incomingBtn btn btn-info" ng-click="selectZone(null)">
+          <span class="glyphicon glyphicon-time"></span>
+           in coming ...
+        </button>
 
-          <div class="col-xs-6 zoneBG" >
-            <h4 >ZONE A</h4><span class="span-btn-info" ng-if="false">{{presentData.A.count}} {{ presentData.A.count >1? "people":"person"}} </span>
-            <div style="height:150px;overflow-y:auto;margin-top:10px;">
-              <div ng-repeat="nodes in presentData.A" ng-if="presentData.A.length"  ng-class="{zoneDisplay: 'A' != user.zone,adminDisplay: user.admin}">
-                <div class="item" ng-click="showing(nodes)" >
-                  <b >{{nodes.name? nodes.name:nodes.uuid}}</b>
-                  <!-- <b>&nbsp;&nbsp;&nbsp;type: {{nodes.type}}</b> -->
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-xs-6 zoneBG">
-            <h4 >ZONE B</h4><span class="span-btn-info" ng-if="false">{{presentData.B.count}} {{ presentData.B.count >1? "people":"person"}} </span>
-            <div style="height:150px;overflow-y:auto;margin-top:10px;">
-              <div ng-repeat="nodes in presentData.B" ng-if="presentData.B.length" ng-class="{zoneDisplay: 'B' != user.zone,adminDisplay: user.admin}">
-                <div class="item " ng-click="showing(nodes)">
-                  <b >{{nodes.name? nodes.name:nodes.uuid}}</b>
-                  <!-- <b>&nbsp;&nbsp;&nbsp;type: {{nodes.type}}</b> -->
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-
-        <div class="row" style="text-align:center;">
-          <div class="col-xs-6 zoneBG">
-            <h4 >ZONE C</h4><span class="span-btn-info" ng-if="false">{{presentData.C.count}} {{ presentData.C.count >1? "people":"person"}} </span>
-            <div style="height:150px;overflow-y:auto;margin-top:10px;">
-              <div ng-repeat="nodes in presentData.C" ng-if="presentData.C.length" ng-class="{zoneDisplay: 'C' != user.zone,adminDisplay: user.admin}">
-                <div class="item " ng-click="showing(nodes)">
-                  <b >{{nodes.name? nodes.name:nodes.uuid}}</b>
-                  <!-- <b>&nbsp;&nbsp;&nbsp;type: {{nodes.type}}</b> -->
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-xs-6 zoneBG">
-            <h4 >ZONE D</h4><span class="span-btn-info" ng-if="false">{{presentData.D.count}} {{ presentData.D.count >1? "people":"person"}} </span>
-            <div style="height:150px;overflow-y:auto;margin-top:10px;">
-              <div ng-repeat="nodes in presentData.D" ng-if="presentData.D.length" ng-class="{zoneDisplay: 'D' != user.zone,adminDisplay: user.admin}">
-                <div class="item " ng-click="showing(nodes)">
-                  <b >{{nodes.name? nodes.name:nodes.uuid}}</b>
-                  <!-- <b>&nbsp;&nbsp;&nbsp;type: {{nodes.type}}</b> -->
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-
-      <div class="fullscreenDialog" ng-if="editItem.uuid" ng-init="name = editItem.name; description = editItem.description; check = editItem.security ">
-        <div class="innerDialog col-md-4 col-md-offset-4" >
-          <p>uuid  {{editItem.uuid}}</p>
-          <label>name</label>
-          <input type="text" class="form-control" ng-model="name" /><br/>
-          <label>security</label><input type="checkbox" ng-model="check" ng-true-value="'Yes'" ng-false-value="'No'"><br/>
-          <label>description</label>
-          <textarea class="form-control" ng-model="description" /></textarea><br/>
-          <button class="btn btn-success" ng-click="updateItem(name,description,check)">submit</button>
-          <button class="btn btn-default" ng-click="cancle(editItem)">cancle</button>
-          <br/>
-        </div>
-      </div>
-
-      <div class="fullscreenDialog" ng-if="showItem.uuid">
-        <div class="innerDialog col-md-4 col-md-offset-4" >
-          <p style="position:absolute;top:0px;right:10px;cursor:pointer;" ng-click="cancle(showItem);">x</p>
-          <h3>{{showItem.name? showItem.name:showItem.uuid}}</h3>
-          <p>description</p>
-          <div ng-if="showItem.description" style="margin-bottom:10px;">
-            {{showItem.description}}
-          </div>
-          <span class="span-btn-primary" ng-click="navigate(showItem)">navigate</span>
-
-          <span class="span-btn-primary" ng-if="user.admin" ng-click="editing(showItem)">edit information</span>
-        </div>
-      </div>
-
-
-
-
-
-      <div class="fullscreenDialog" ng-if="adminLogin" >
-          <div class="innerDialog col-md-4 col-md-offset-4">
-
-            <p>{{loginStatus? loginStatus : ""}}</p>
-            <label>ADMIN CODE</label>
-            <input type="text" class="form-control" ng-model="pin" /><br/>
-            <button class="btn btn-success" ng-click="adminLoginSubmit(pin)">submit</button>
-            <button class="btn btn-default" ng-click="cancle(adminLogin)">cancle</button><br/>
-
-          </div>
       </div>
     </div>
+
+    <!-- zone map -->
+    <div class="zoneContain zoneContainHeight">
+      <div class="container" style="height:400px;width:1270px;">
+        <div class="row">
+          <div class="col-xs-3 zone" ng-class="checkZone('A')? 'zoneActive':'zoneInActive' " ng-click="selectZone('A')">
+            <h3>Zone A</h3>
+          </div>
+          <div class="col-xs-3 zone" ng-class="checkZone('B')? 'zoneActive':'zoneInActive' " ng-click="selectZone('B')">
+            <h3>Zone B</h3>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-xs-3"></div>
+          <div class="col-xs-3 zone" ng-class="checkZone('C')? 'zoneActive':'zoneInActive' " ng-click="selectZone('C')">
+            <h3>Zone C</h3>
+          </div>
+          <div class="col-xs-3 zone" ng-class="checkZone('D')? 'zoneActive':'zoneInActive' " ng-click="selectZone('D')">
+            <h3>Zone D</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- see in zone -->
+    <div class="zoneSelected" ng-if="selectZoneItem" >
+      <div class="row">
+        <div class="container col-md-2 zoneSelectedDetail" style="text-align:center;">
+            <h3> {{selectZoneItem.length}} {{selectZoneItem.length == 1? 'art':'arts' }} in zone.</h3>
+        </div>
+        <div class="col-md-10 zoneSelectedGrid">
+            <div class="row gridItem col-md-3" ng-repeat="zoneItem in selectZoneItem">
+              <div class="col-xs-5">
+                <img class="imgItem col-xs-12" src="{{zoneItem.img}}"/>
+              </div>
+              <div class="col-xs-4" ng-click="selectInformation(zoneItem)" style="cursor:pointer;">
+                <h4 ng-if="admin">{{zoneItem.title}}</h4>
+                <h5 ng-if="!admin">{{zoneItem.title}}</h5>
+                <p style="font-size:12px;">{{zoneItem.painter}}</p>
+              </div>
+
+              <div ng-if="admin" class="gridItemAdmin col-xs-3">
+                <div class="row" ng-if="selectZoneItem.zone">
+                  <span ng-if="zoneItem.lock" class="label label-warning" ng-click="lockControl(zoneItem.uuid,false)">
+                    Lock
+                  </span>
+                  <span ng-if="!zoneItem.lock" class="label label-default" ng-click="lockControl(zoneItem.uuid,true)">
+                    Unlock
+                  </span>
+                </div>
+
+                <div class="row">
+                  <span class="label label-primary" ng-click="selectForm(zoneItem)">
+                    Edit
+                  </span>
+                </div>
+              </div>
+
+              <div ng-if="!admin" class="gridItemNotAdmin col-xs-3">
+                <div class="row">
+                  <span class="label label-info" ng-click="selectInformation(zoneItem)">
+                    more ...
+                  </span>
+                </div>
+              </div>
+            </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- setting -->
+    <div class="zoneSelected setting container" ng-if="settingSelected">
+      <div style="padding-left:118px;padding-top:10px;padding-bottom:10px;top:50px;width:100%;margin-bottom:10px;margin-top:10px;position:fixed;background:white;z-index:90;" ng-if="admin">
+        <button class="btn btn-warning" ng-click="lockControlAll(true)">
+          Lock all
+        </button>
+        <button class="btn btn-default" ng-click="lockControlAll(false)">
+          Unlock all
+        </button>
+      </div>
+      <div style="height:70px;">
+      </div>
+      <div class="panel panel-info col-md-5 col-md-offset-1" ng-repeat="zoneArray in eachZone">
+        <div class="panel-heading row">
+          <h4 class="panel-title">Zone {{zoneArray[0].zone? zoneArray[0].zone:"in coming. . ."}}</h4>
+        </div>
+        <div class="panel-body " style="padding:0px;" >
+          <div class="row settingItem" style="{{$last? 'border-bottom:0px;':null }}" ng-repeat="zoneItem in zoneArray">
+            <div class="col-xs-5"  ng-click="selectInformation(zoneItem)" style="cursor:pointer;">
+              <h5>{{zoneItem.title}}</h5>
+            </div>
+            <section ng-if="admin">
+              <div class="buttonSettingRow col-xs-2 col-xs-offset-3" ng-click="selectForm(zoneItem)">
+                <span class="label label-primary">
+                  Edit
+                </span>
+              </div>
+
+              <div class="buttonSettingRow col-xs-2">
+                <section ng-if="zoneArray[0].zone">
+                  <span ng-if="zoneItem.lock" class="label label-warning" ng-click="lockControl(zoneItem.uuid,false)">
+                    Lock
+                  </span>
+                  <span ng-if="!zoneItem.lock" class="label label-default" ng-click="lockControl(zoneItem.uuid,true)">
+                    Unlock
+                  </span>
+                </section>
+              </div>
+            </section>
+
+            <section ng-if="!admin">
+              <div class="buttonSettingRow col-xs-2 col-xs-offset-1">
+                <span  class="label label-success">
+                  navigate
+                </span>
+              </div>
+
+              <div class="buttonSettingRow col-xs-2 col-xs-offset-1">
+                <span class="label label-info" ng-click="selectInformation(zoneItem)">
+                  more ...
+                </span>
+              </div>
+            </section>
+          </div>
+
+        </div>
+
+      </div>
+      <div style="height:70px;">
+      </div>
+    </div>
+
+    <!-- Form -->
+    <div class="zoneSelected formPage" ng-if="formSelected"  ng-init="uuid=editItem.uuid;name=editItem.title;artist=editItem.painter;url=editItem.img;description=editItem.description;">
+      <button type="button" class="close closeForm" aria-label="Close"><span aria-hidden="true" ng-click="closeForm()">&times;</span></button>
+      <div class="container">
+
+        <div class="row">
+          <div class="form-group col-md-6"  >
+            <label>Tag ID</label>
+            <input type="text" class="form-control" ng-model="uuid" placeholder="Tag ID" >
+            <label >Name</label>
+            <input type="text" class="form-control" ng-model="name" placeholder="Picture name...">
+            <label >Artist</label>
+            <input type="text" class="form-control" ng-model="artist" placeholder="Artist name...">
+            <label >Image Example</label>
+            <input type="url" class="form-control" ng-model="url" placeholder="Image url...">
+          </div>
+          <div class="col-md-6">
+            <label >Description</label>
+            <textarea class="form-control" rows="8"  ng-model="description">{{description}}</textarea>
+          </div>
+        </div>
+        <div class="row" >
+          <div class="col-md-4 col-md-offset-4" style="text-align:center;">
+            <button ng-if="editItem"type="button" class="btn btn-success btn-lg" name="button" ng-click="updateDataService(editItem.uuid,name,artist,url,description,editItem.zone)">
+              Accept
+            </button>
+            <button ng-if="!editItem"type="button" class="btn btn-success btn-lg" name="button" ng-click="insertDataService(uuid,name,artist,url,description,editItem.zone)">
+              Accept
+            </button>
+            <button type="button" class="btn btn-default btn-lg" name="button" ng-click="closeForm()">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Information -->
+    <div class="zoneSelected informPage" ng-if="informItem">
+      <div class="container">
+        <button type="button" class="close" aria-label="Close" ng-click="closeInformation()" ><span aria-hidden="true" >&times;</span></button>
+
+        <div class="row">
+          <div class="col-md-7" >
+            <div class="row ">
+              <img src="{{informItem.img}}" class="col-xs-offset-1 col-xs-10"/>
+            </div>
+          </div>
+
+          <div class="col-md-5" >
+            <div class="row" style="text-align:center;">
+              <h1>{{informItem.title}}</h1>
+            </div>
+            <div class="row" style="text-align:center;">
+              <h3>Zone {{informItem.zone? informItem.zone:"in coming..."}}</h3>
+
+            </div>
+          </div>
+        </div>
+
+
+      </div>
+
+      <div class="navigateButton">
+        <button type="button" class="btn btn-lg btn-success" name="button">
+          Navigate
+        </button>
+      </div>
+    </div>
+
   </body>
 
 </html>
