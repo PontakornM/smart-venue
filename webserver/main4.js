@@ -1,5 +1,5 @@
 
-var dbSocket = require('socket.io-client').connect("http://localhost:9000");
+var dbSocket = require('socket.io-client').connect("http://192.168.1.10:9000");
 
 var express = require('express');
 var moment = require('moment');
@@ -12,9 +12,9 @@ var logger = log4js.getLogger('Smart Venue');
 
 var user;
 var watchList = [];
-
+var totalData;
 dbSocket.on('DataService', function(data){
-  // logger.debug(data);
+  logger.debug(data);
   totalData = data;
 });
 
@@ -22,24 +22,29 @@ dbSocket.on('checkNew',function(data){
       logger.debug(data);
       totalData.push(data);
       logger.debug("New: "+ data);
+      io.emit('NewDataService',{ndata:data});
       io.emit('DataServiceClient',{array:totalData});
 })
 
 function checkLock(socket){
   socket.on('ClearWatchListServiceClient',function(wdata){
-      watchList = _.reject(watchList,wdata.data);
-      socket.emit('WatchListServiceClient',watchList);
+      logger.debug("ClearWatch: "+watchList);
+     watchList = _.reject(watchList,function(obj){ return obj.uuid == wdata.data.uuid});
   });
 
-  socket.on('ClearAllWatchListServiceClient',function(wdata){
-      watchList = [];
-      socket.emit('WatchListServiceClient',watchList);
-  })
 }
+
+function NowHereFunction(data) {
+   io.emit("NowHereService",{data:data});
+}
+
 
 function checkUpdate(socket){
   dbSocket.on('checkUpdate',function (udata) {
+    var state = false;
     var checkUser;
+
+
     if(user)
       checkUser = udata.uuid == user.uuid ? true : false;
 
@@ -53,19 +58,42 @@ function checkUpdate(socket){
                               return item.uuid == udata.uuid;
                           });
       var tmp = totalData[indexOfItem];
-      if(tmp.zone != udata.zone && udata.lock){
-          watchList.push(udata);
-          socket.emit('WatchListServiceClient',watchList);
+
+      if(tmp){
+        // logger.debug(tmp);
+
+        // logger.debug("NowHereService" + tmp.uuid.substring(0,4)+" : "+(tmp.zone == null && udata.zone));
+        if(tmp.zone == null && udata.zone != null){
+           NowHereFunction(udata);
+        }
+        // if((tmp.zone == null) && ((typeof udata.zone) == 'string')){
+        //     logger.debug("NowHereService" + tmp.uuid+" : "+tmp.zone == null && udata.zone);
+        //
+        // }
+
+        if(tmp.zone != udata.zone && udata.lock){
+          console.log( _.findIndex(watchList,{uuid:udata.uuid}));
+          if( _.findIndex(watchList,{uuid:udata.uuid}) == -1){
+            watchList.push(tmp);
+            logger.debug("Watch: "+watchList);
+          }
+        }
+
+
+        if(watchList.length > 0)
+            socket.emit('WatchListService',{watch:watchList});
+
+        totalData[indexOfItem] = udata;
+        socket.emit('DataServiceClient',{array:totalData});
       }
-      totalData[indexOfItem] = udata;
-      socket.emit('DataServiceClient',{array:totalData});
+
     }
   })
 }
 
 function updateData(socket){
   socket.on("UpdateDataServiceClient",function(_data){
-    logger.debug("Update: "+_data);
+    // logger.debug("Update: "+_data);
     dbSocket.emit('UpdateDataService',_data);
   })
 }
@@ -103,10 +131,20 @@ function setID(socket) {
 
   })
 }
+function checktotalData(socket){
+  if(totalData){
+    socket.emit('DataServiceClient',{array:totalData});
+    return;
+  }
+  else {
+    console.log("w8 for data. . .");
+    setTimeout(function(){ checktotalData(socket) },5000);
+  }
+}
 
 io.on('connection',function(socket){
   logger.info("io connected");
-  socket.emit('DataServiceClient',{array:totalData});
+  checktotalData(socket);
 
   checkUpdate(socket);
   updateData(socket);

@@ -54,7 +54,6 @@
         position: absolute;
         z-index:100;
         width:400px;
-        height:100%;
         right:0px;
         top:50px;
         padding:20px;
@@ -122,6 +121,7 @@
       .formPage{
         background:#22313F;
         padding-top:10%;
+        top:0px;
         color:#C5EFF7;
       }
       .closeForm{
@@ -265,4 +265,13 @@
 
       input{
         text-align:center;
+      }
+
+      .arrow-up {
+      	width: 0;
+      	height: 0;
+      	border-left: 20px solid transparent;
+      	border-right: 20px solid transparent;
+
+      	border-bottom: 20px solid black;
       }
