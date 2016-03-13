@@ -22,7 +22,7 @@
 
   <body ng-controller = "FinalController" >
     <!-- navbar -->
-    <nav class="navbar navbar-default">
+    <nav class="navbar navbar-inverse">
       <div class="container-fluid">
         <!-- Brand and toggle get grouped for better mobile display -->
         <div class="navbar-header">
@@ -111,23 +111,24 @@
 
     <!-- see in zone -->
     <div class="zoneSelected" ng-if="selectZoneItem" >
-      <div class="row">
+      <div >
         <div class="container col-md-2 zoneSelectedDetail" style="text-align:center;">
             <h3> {{selectZoneItem.length}} {{selectZoneItem.length == 1? 'art':'arts' }} in zone.</h3>
         </div>
         <div class="col-md-10 zoneSelectedGrid">
             <div class="row gridItem col-md-3" ng-repeat="zoneItem in selectZoneItem">
-              <div class="col-xs-5">
-                <img class="imgItem col-xs-12" ng-if="zoneItem.img" src="{{zoneItem.img}}"/>
+              <div class="col-xs-5" style="text-align:center;">
+
+                <img class="imgItem col-xs-12"  src='http://192.168.1.10:8000/image/{{zoneItem.img == null? "default.png":zoneItem.img}}'/>
               </div>
               <div class="col-xs-4" ng-click="selectInformation(zoneItem)" style="cursor:pointer;">
-                <h4 ng-if="admin">{{zoneItem.title}}</h4>
-                <h5 ng-if="!admin">{{zoneItem.title}}</h5>
+                <h4 ng-if="admin">{{zoneItem.title? zoneItem.title:zoneItem.uuid.substring(zoneItem.uuid.length-4,zoneItem.uuid.length)}}</h4>
+                <h5 ng-if="!admin">{{zoneItem.title? zoneItem.title:zoneItem.uuid.substring(12,16)}}</h5>
                 <p style="font-size:12px;">{{zoneItem.painter}}</p>
               </div>
 
               <div ng-if="admin" class="gridItemAdmin col-xs-3">
-                <div class="row" ng-if="selectZoneItem.zone">
+                <div class="row">
                   <span ng-if="zoneItem.lock" class="label label-warning" ng-click="lockControl(zoneItem.uuid,false)">
                     Lock
                   </span>
@@ -144,6 +145,12 @@
               </div>
 
               <div ng-if="!admin" class="gridItemNotAdmin col-xs-3">
+
+                <div class="row" style="margin-bottom:-10px;">
+                  <span ng-if="(user.zone != zoneItem.zone) && (currentZone != 'in coming. . .')" class="label label-success" ng-click="StartNavigate(zoneItem)">
+                    navigate
+                  </span>
+                </div>
                 <div class="row">
                   <span class="label label-info" ng-click="selectInformation(zoneItem)">
                     more ...
@@ -199,7 +206,7 @@
 
             <section ng-if="!admin">
               <div class="buttonSettingRow col-xs-2 col-xs-offset-1">
-                <span  class="label label-success">
+                <span  ng-if="(user.zone != zoneItem.zone)&&!admin" class="label label-success" ng-click="StartNavigate(zoneItem)">
                   navigate
                 </span>
               </div>
@@ -221,7 +228,7 @@
 
     <!-- Form -->
     <div class="zoneSelected formPage" ng-if="formSelected"  ng-init="uuid=editItem.uuid;name=editItem.title;artist=editItem.painter;url=editItem.img;description=editItem.description;">
-      <button type="button" class="close closeForm" aria-label="Close"><span aria-hidden="true" ng-click="closeForm()">&times;</span></button>
+      <button type="button" class="close closeForm" aria-label="Close" ng-click="closeForm()"><span aria-hidden="true" >&times;</span></button>
       <div class="container">
 
         <div class="row">
@@ -264,7 +271,7 @@
         <div class="row">
           <div class="col-md-7" >
             <div class="row ">
-              <img ng-if="informItem.img" src="{{informItem.img}}" class="col-xs-offset-1 col-xs-10"/>
+              <img  src='http://192.168.1.10:8000/image/{{informItem.img == null? "default.png":informItem.img}}' class="col-xs-offset-1 col-xs-10"/>
             </div>
           </div>
 
@@ -283,20 +290,18 @@
       </div>
 
       <div class="navigateButton">
-        <button type="button" class="btn btn-lg btn-success" name="button">
+        <button type="button" ng-if="(user.zone != informItem.zone)&&!admin" class="btn btn-lg btn-success" name="button" ng-click="StartNavigate(informItem)">
           Navigate
         </button>
       </div>
     </div>
+    <div  class="container navButton" ng-if="StartingNav" style="text-align:center;">
 
-    <div  class="container">
-    <div class="row">
-      <div class="arrow-up " style="-webkit-transform: rotate({{-directional.X}}deg);transform: rotate({{-directional.X}}deg);" >
-      </div>
-      {{dir}}
+      <p class="row">{{NavigateItem.title? NavigateItem.title:NavigateItem.uuid.substring(0,5)}}</p>
+      <img src="http://192.168.1.10:8000/image/arrow.png" class="col-xs-offset-3 imgItem" style="-webkit-transform: rotate({{-directional}}deg);transform: rotate({{-directional}}deg);" >
+      <!-- {{"XXXX"+directional.X }} -->
       <!-- {{directional.X + ":" + directional.Y + ":" + directional.Z}} -->
-      <button type="button" class='btn btn-primary' ng-click="testAndroid()" name="button">ปุ่มไงสัส</button>
-    </div>
+      <!-- <button type="button" class='btn btn-primary' ng-click="testAndroid()" name="button">ปุ่มไงสัส</button> -->
   </div>
 
   </body>

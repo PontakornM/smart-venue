@@ -15,12 +15,30 @@ App
     $scope.blabla = 0;
     $scope.bla = 0;
     $scope.directional = {};
+    $scope.coredirection = 0;
+    var navCoredirection = [
+      {source:'A',destination:'B',core:110,next:true},
+      {source:'B',destination:'C',core:50,next:true},
+      {source:'C',destination:'D',core:50,next:true},
+      {source:'B',destination:'A',core:-70,next:false},
+      {source:'C',destination:'B',core:50,next:false},
+      {source:'D',destination:'C',core:50,next:false},
+    ]
+
+  var intervalDirect;
+  var dialogTimeout = 5000;
   $scope.testAndroid = function(){
     if(Android){
       // Android.makeToast("WTF");
 
-      $interval(function(){
-        $scope.dir = Android.makeNavigate();
+      intervalDirect = $interval(function(){
+        // $scope.dir = Android.makeNavigate();
+        // $scope.dir = $scope.dir.replace("X",'"X"');
+        // $scope.dir = $scope.dir.replace("Y",'"Y"');
+        // $scope.dir = $scope.dir.replace("Z",'"Z"');
+
+        $scope.directional = Android.makeNavigate() + $scope.coredirection;
+
       },100);
       // var fuck= Android.makeNavigate();
 
@@ -29,7 +47,7 @@ App
   var deviceWidth = $window.innerWidth;
   var zone = null;
 
-  $scope.admin = (deviceWidth > 500);
+  $scope.admin = (deviceWidth > 700);
 
 
   // $scope.notifDialog = [
@@ -54,7 +72,7 @@ App
 
   socket.on("DataServiceClient",function(_data){
     $scope.data = _data.array;
-    $scope.eachZone = _.filter(_data.array,function(item){return item.type != 0;});
+    $scope.eachZone = _.filter(_data.array,function(item){return item.type != '0';});
     $scope.eachZone = _.sortBy($scope.eachZone,'zone');
     $scope.eachZone = _.groupBy($scope.eachZone,'zone');
 
@@ -109,13 +127,30 @@ App
     $scope.notifDialog.push(tmp);
     console.log($scope.notifDialog);
 
-    setTimeout(function(){  $scope.notifDialog = _.reject($scope.notifDialog,{uuid:tmp.uuid}); },1000);
+    setTimeout(function(){  $scope.notifDialog = _.reject($scope.notifDialog,{uuid:tmp.uuid}); },dialogTimeout);
   }
+  // $scope.enable = "ENN"
 
   socket.on("UserServiceClient",function(_user){
-    $scope.user = _user;
-    // console.log($scope.user);
-    zone = _user.zone;
+    // console.log("fuck");
+    //       $scope.enable = "OKAY"
+    if(!$scope.admin){
+      $scope.user = _user;
+      // console.log($scope.user);
+      zone = _user.zone;
+
+
+      if($scope.StartingNav){
+        if($scope.user.zone !=  $scope.NavigateItem.zone){
+           var findSource = _.findWhere(navCoredirection,{source:zone,next:(zone.localeCompare( $scope.NavigateItem.zone) == -1)});
+           $scope.coredirection = findSource.core;
+        }
+        else {
+           StopNavigate();
+        }
+      }
+
+    }
   })
 
 
@@ -129,6 +164,7 @@ App
   $scope.closeDialog = function(component){
     $scope.notifDialog = _.reject($scope.notifDialog,function(obj){ return obj.uuid == component.dialog.uuid});
     console.log(component.dialog);
+    if(component.dialog.type == 'danger')
     socket.emit('ClearWatchListServiceClient',{data:component.dialog});
   }
 
@@ -217,6 +253,32 @@ App
             socket.emit('UpdateDataServiceClient',datax);
         }
     }
+  }
+
+  $scope.StartingNav = false;
+  $scope.NavigateItem;
+  $scope.StartNavigate = function(_data){
+    $scope.NavigateItem = _data;
+    $scope.StartingNav = true;
+    $scope.testAndroid();
+    $scope.backToMain();
+    $scope.closeInformation();
+    if($scope.user.zone !=  $scope.NavigateItem.zone){
+       var findSource = _.findWhere(navCoredirection,{source:zone,next:(zone.localeCompare( $scope.NavigateItem.zone) == -1)});
+       $scope.coredirection = findSource.core;
+    }
+    else {
+       StopNavigate();
+    }
+
+  }
+
+  var StopNavigate = function(){
+    $scope.notifDialog.push({uuid:"nav",type:'success',title:"Arrive to "+  $scope.NavigateItem.title });
+    setTimeout(function(){  $scope.notifDialog = _.reject($scope.notifDialog,{uuid:"nav"}); },dialogTimeout);
+    $scope.NavigateItem = null;
+    $scope.StartingNav = false;
+    $interval.cancle(intervalDirect);
   }
 
 })

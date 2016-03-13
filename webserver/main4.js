@@ -50,7 +50,7 @@ function checkUpdate(socket){
 
     if(checkUser){
         user = udata;
-        logger.debug('User : ',user.uuid.substring(0,4),'Zone : ',user.zone);
+        // logger.debug('User : ',user.uuid.substring(0,4),'Zone : ',user.zone);
         socket.emit('UserServiceClient',user);
     }
     else{
@@ -102,10 +102,14 @@ function newData(socket){
   socket.on('InsertDataServiceClient',function(_data){
     _data.zone  = null;
     _data.type  = '1';
-    _data.proximity  = -2;
+    _data.proximity  = 2;
     logger.debug(_data);
     dbSocket.emit('InsertDataService',_data);
   });
+}
+function emitUser(user){
+  logger.debug("fuck");
+  io.emit("UserServiceClient",user);
 }
 
 function setID(socket) {
@@ -113,15 +117,16 @@ function setID(socket) {
 
   socket.on("setID",function(uuidData){
     uuidData = uuidData.replace(/-/gi,"");
-    logger.debug("uuid_user: "+uuidData);
-    user = _.findWhere(totalData,{uuid: uuidData});
+    // logger.debug("uuid_user: "+uuidData);
+    user = _.findWhere(totalData,{uuid: uuidData.toUpperCase()});
     if(user){
-      socket.emit("UserServiceClient",user);
+      // logger.debug("Enable");
+      emitUser(user);
       logger.debug(user.uuid.substring(0,4));
     }
     else{
-      var _data = {uuid:uuidData,zone:undefined,type:'0',proximity:-2};
-      logger.debug("New user"+ _data);
+      var _data = {uuid:uuidData.toUpperCase(),zone:undefined,type:'0',proximity:2};
+      // logger.debug("New user"+ _data);
       dbSocket.emit('InsertDataService',_data);
       setTimeout(function(){
         user = _.findWhere(totalData,{uuid: uuidData});
