@@ -33,15 +33,13 @@ io.on('connection',function(socket){
         });
 
         socket.on('InsertDataService',function(data){
-              console.log('InsertDataService on...');
-              if(!check_err(data)){
-                check_reg(data);
-              }
+	            console.log('InsertDataService on...');
+	            add_newreg(data)
         });
 
         socket.on('UpdateDataService',function(data){
                 console.log('UpdateDataService on...');
-                check_reg(data);
+                update_reg(data);
         });
 
 });
@@ -96,8 +94,9 @@ function update_reg (req){
         console.log('Reg : '+req.uuid+' ,Zone : ' + req.zone + ' ,Prox : ' + req.proximity);
         // determine zone
         if( req.admin != true && req.zone != doc.zone && ((req.proximity == 1 && doc.proximity == 1 )|| doc.proximity < 1)){
-                console.log('Ignore Updating data....!!!');
+                console.log('Ignoring Update Zone....!!!');
                 req.zone = doc.zone;
+                req.proximity = doc.proximity;
         }
         //  else if(req.zone == doc.zone || (req.zone != doc.zone && doc.proximity == 1  && req.proximity < 1) || req.admin == true){
 
