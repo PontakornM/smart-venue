@@ -90,44 +90,44 @@
     <div class="zoneContain zoneContainHeight">
       <div class="container" style="height:400px;width:1270px;">
         <div class="row">
-          <div class="col-xs-3 zone" ng-class="checkZone('A')? 'zoneActive':'zoneInActive' " ng-click="selectZone('A')">
-            <h3>Zone A</h3>
-          </div>
+          <div class="col-xs-3"></div>
           <div class="col-xs-3 zone" ng-class="checkZone('B')? 'zoneActive':'zoneInActive' " ng-click="selectZone('B')">
             <h3>Zone B</h3>
           </div>
+          <div class="col-xs-3 zone" ng-class="checkZone('A')? 'zoneActive':'zoneInActive' " ng-click="selectZone('A')">
+            <h3>Zone A</h3>
+          </div>
         </div>
         <div class="row">
-          <div class="col-xs-3"></div>
-          <div class="col-xs-3 zone" ng-class="checkZone('C')? 'zoneActive':'zoneInActive' " ng-click="selectZone('C')">
-            <h3>Zone C</h3>
-          </div>
           <div class="col-xs-3 zone" ng-class="checkZone('D')? 'zoneActive':'zoneInActive' " ng-click="selectZone('D')">
             <h3>Zone D</h3>
+          </div>
+          <div class="col-xs-3 zone" ng-class="checkZone('C')? 'zoneActive':'zoneInActive' " ng-click="selectZone('C')">
+            <h3>Zone C</h3>
           </div>
         </div>
       </div>
     </div>
 
     <!-- see in zone -->
-    <div class="zoneSelected" ng-if="selectZoneItem" >
+    <div class="zoneSelected" ng-if="selectZoneItem"  >
       <div >
         <div class="container col-md-2 zoneSelectedDetail" style="text-align:center;">
             <h3> {{selectZoneItem.length}} {{selectZoneItem.length == 1? 'art':'arts' }} in zone.</h3>
         </div>
         <div class="col-md-10 zoneSelectedGrid">
-            <div class="row gridItem col-md-3" ng-repeat="zoneItem in selectZoneItem">
+            <div class="row gridItem col-md-5" ng-repeat="zoneItem in selectZoneItem" style="border-bottom:1px solid white;">
               <div class="col-xs-5" style="text-align:center;">
 
                 <img class="imgItem col-xs-12"  src='http://192.168.1.10:8000/image/{{zoneItem.img == null? "default.png":zoneItem.img}}'/>
               </div>
               <div class="col-xs-4" ng-click="selectInformation(zoneItem)" style="cursor:pointer;">
                 <h4 ng-if="admin">{{zoneItem.title? zoneItem.title:zoneItem.uuid.substring(zoneItem.uuid.length-4,zoneItem.uuid.length)}}</h4>
-                <h5 ng-if="!admin">{{zoneItem.title? zoneItem.title:zoneItem.uuid.substring(12,16)}}</h5>
+                <h5 ng-if="!admin">{{zoneItem.title? zoneItem.title:zoneItem.uuid.substring(zoneItem.uuid.length-4,zoneItem.uuid.length)}}</h5>
                 <p style="font-size:12px;">{{zoneItem.painter}}</p>
               </div>
 
-              <div ng-if="admin" class="gridItemAdmin col-xs-3">
+              <div ng-if="admin" class="gridItemAdmin col-xs-2">
                 <div class="row">
                   <span ng-if="zoneItem.lock" class="label label-warning" ng-click="lockControl(zoneItem.uuid,false)">
                     Lock
@@ -205,13 +205,13 @@
             </section>
 
             <section ng-if="!admin">
-              <div class="buttonSettingRow col-xs-2 col-xs-offset-1">
+              <div class="buttonSettingRow col-xs-3 ">
                 <span  ng-if="(user.zone != zoneItem.zone)&&!admin" class="label label-success" ng-click="StartNavigate(zoneItem)">
                   navigate
                 </span>
               </div>
 
-              <div class="buttonSettingRow col-xs-2 col-xs-offset-1">
+              <div class="buttonSettingRow col-xs-3 ">
                 <span class="label label-info" ng-click="selectInformation(zoneItem)">
                   more ...
                 </span>
@@ -234,13 +234,16 @@
         <div class="row">
           <div class="form-group col-md-6"  >
             <label>Tag ID</label>
-            <input type="text" class="form-control" ng-model="uuid" placeholder="Tag ID" >
+            <section ng-if="!uuid">
+              <input type="text" class="form-control" ng-model="uuid" placeholder="Tag ID" >
+            </section>
+            <h3  ng-if="uuid.length > 1"  ng-model="uuid">{{uuid.substring(uuid.length-4,uuid.length)}}</h3>
             <label >Name</label>
             <input type="text" class="form-control" ng-model="name" placeholder="Picture name...">
             <label >Artist</label>
             <input type="text" class="form-control" ng-model="artist" placeholder="Artist name...">
             <label >Image Example</label>
-            <input type="url" class="form-control" ng-model="url" placeholder="Image url...">
+            <input type="text" class="form-control" ng-model="url" placeholder="Image url...">
           </div>
           <div class="col-md-6">
             <label >Description</label>
@@ -252,7 +255,7 @@
             <button ng-if="editItem"type="button" class="btn btn-success btn-lg" name="button" ng-click="updateDataService(editItem.uuid,name,artist,url,description,editItem.zone)">
               Accept
             </button>
-            <button ng-if="!editItem"type="button" class="btn btn-success btn-lg" name="button" ng-click="insertDataService(uuid,name,artist,url,description,editItem.zone)">
+            <button ng-if="!editItem"type="button" class="btn btn-success btn-lg" name="button" ng-click="insertDataService('8006',name,artist,url,description,editItem.zone)">
               Accept
             </button>
             <button type="button" class="btn btn-default btn-lg" name="button" ng-click="closeForm()">
@@ -283,6 +286,13 @@
               <h3>Zone {{informItem.zone? informItem.zone:"in coming..."}}</h3>
 
             </div>
+            <div class="row" style="text-align:center;">
+              <h5>made by <u>{{informItem.painter}}</u></h5>
+
+            </div>
+            <p class='row' style="text-align:center;padding:60px;background:lightgray;">
+              {{informItem.description}}
+            </p>
           </div>
         </div>
 
@@ -297,8 +307,12 @@
     </div>
     <div  class="container navButton" ng-if="StartingNav" style="text-align:center;">
 
-      <p class="row">{{NavigateItem.title? NavigateItem.title:NavigateItem.uuid.substring(0,5)}}</p>
-      <img src="http://192.168.1.10:8000/image/arrow.png" class="col-xs-offset-3 imgItem" style="-webkit-transform: rotate({{-directional}}deg);transform: rotate({{-directional}}deg);" >
+      <!-- <p class="row">{{NavigateItem.title? NavigateItem.title:NavigateItem.uuid.substring(0,5)}}</p> -->
+      <div class="col-xs-6 col-xs-offset-3" style="background:#ECECEC;border-radius:100px;padding-bottom:10px;">
+        <h4>{{NavigateItem.title? NavigateItem.title:NavigateItem.uuid.substring(0,5)}}</h4>
+        <img src="http://192.168.1.10:8000/image/arrow.png"  style="width:50px;height:50px;-webkit-transform: rotate({{-directional}}deg);transform: rotate({{-directional}}deg);" >
+
+      </div>
       <!-- {{"XXXX"+directional.X }} -->
       <!-- {{directional.X + ":" + directional.Y + ":" + directional.Z}} -->
       <!-- <button type="button" class='btn btn-primary' ng-click="testAndroid()" name="button">ปุ่มไงสัส</button> -->

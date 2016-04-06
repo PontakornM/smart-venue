@@ -165,6 +165,7 @@
 
       .navButton{
         /*background:red;*/
+
         text-align:center;
         padding-top:10px;
         padding-bottom:10px;
@@ -242,6 +243,12 @@
 
         .navigateButton{
           display:none;
+        }
+
+        .imgItem{
+          margin-top:10px;
+          margin-bottom:10px;
+          margin-left:-10px;
         }
       }
 

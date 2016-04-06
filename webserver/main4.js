@@ -108,7 +108,7 @@ function newData(socket){
   });
 }
 function emitUser(user){
-  logger.debug("fuck");
+  // logger.debug("fuck");
   io.emit("UserServiceClient",user);
 }
 

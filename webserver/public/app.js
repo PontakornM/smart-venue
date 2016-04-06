@@ -1,5 +1,5 @@
 var App = angular.module('webApp', ['btford.socket-io']);
-var audio = new Audio("ding.wav");
+
 
 var links = {
   monalisa: "http://www.proprofs.com/games/puzzle/sliding/resize_image.php?image=http://to55er.files.wordpress.com/2009/05/mona-lisa.jpg&new_width=450",

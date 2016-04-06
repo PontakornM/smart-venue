@@ -1,4 +1,11 @@
 var data;
+var audio = new Audio("ding.wav");
+
+$('document').ready(function(){
+  var div = document.getElementsByClassName('zoneContain');
+  console.log($('.zoneContain'));
+  // $('.zoneContain').scrollLeft(300);
+})
 
 App
   .factory('socket', function(socketFactory){
@@ -10,19 +17,23 @@ App
 
      return mySocket;
   })
-  .controller('FinalController', function($scope,$window,socket,$interval){
+  .controller('FinalController', function($scope,$window,socket,$interval,$timeout){
+    var scrollZoneELE;
+    angular.element(document).ready(function () {
+        scrollZoneELE =  $('.zoneContain');
+    });
 
-    $scope.blabla = 0;
-    $scope.bla = 0;
+    $scope.StartingNav = false;
+
     $scope.directional = {};
     $scope.coredirection = 0;
     var navCoredirection = [
-      {source:'A',destination:'B',core:110,next:true},
-      {source:'B',destination:'C',core:50,next:true},
-      {source:'C',destination:'D',core:50,next:true},
-      {source:'B',destination:'A',core:-70,next:false},
-      {source:'C',destination:'B',core:50,next:false},
-      {source:'D',destination:'C',core:50,next:false},
+      {source:'A',destination:'B',core:-160,next:true},
+      {source:'B',destination:'C',core:-100,next:true},
+      {source:'C',destination:'D',core:-150,next:true},
+      {source:'B',destination:'A',core:20,next:false},
+      {source:'C',destination:'B',core:80,next:false},
+      {source:'D',destination:'C',core:-90,next:false},
     ]
 
   var intervalDirect;
@@ -70,6 +81,19 @@ App
       setNotifDialogDanger();
   });
 
+
+  var dangerSound = function(){
+
+    if($scope.watchList.length > 0 && $scope.admin && !audio.loop){
+      audio.loop = true;
+      audio.play();
+    }
+    else{
+      audio.pause();
+      audio.loop = false;
+    }
+  }
+
   socket.on("DataServiceClient",function(_data){
     $scope.data = _data.array;
     $scope.eachZone = _.filter(_data.array,function(item){return item.type != '0';});
@@ -106,7 +130,7 @@ App
         tmp.title = tmp.title + ' lost from ' + tmp.zone;
 
         $scope.notifDialog.push(tmp);
-
+        dangerSound();
         console.log("Yolo!!!!" + $scope.notifDialog[0].uuid)
       }
     }
@@ -114,20 +138,21 @@ App
 
   var setNotifDialogSuccess = function(obj){
     var tmp = obj;
+      if(tmp.zone){
+        tmp.type = 'success';
+        tmp.title = tmp.title + ' availiable on zone  ' + tmp.zone;
+      }
+      else{
+        tmp.type = 'info';
+        tmp.title = tmp.title + ' is coming . . . ';
+      }
 
-    if(tmp.zone){
-      tmp.type = 'success';
-      tmp.title = tmp.title + ' availiable on zone  ' + tmp.zone;
-    }
-    else{
-      tmp.type = 'info';
-      tmp.title = tmp.title + ' is coming . . . ';
-    }
+      $scope.notifDialog.push(tmp);
+      console.log($scope.notifDialog);
 
-    $scope.notifDialog.push(tmp);
-    console.log($scope.notifDialog);
+      $timeout(function(){  $scope.notifDialog = _.reject($scope.notifDialog,{uuid:tmp.uuid}); },dialogTimeout );
 
-    setTimeout(function(){  $scope.notifDialog = _.reject($scope.notifDialog,{uuid:tmp.uuid}); },dialogTimeout);
+
   }
   // $scope.enable = "ENN"
 
@@ -139,6 +164,15 @@ App
       // console.log($scope.user);
       zone = _user.zone;
 
+      if(scrollZoneELE){
+        switch (zone) {
+          case 'A': scrollZoneELE.scrollLeft(630);break;
+          case 'B': scrollZoneELE.scrollLeft(300);scrollTop(0);break;
+          case 'C': scrollZoneELE.scrollLeft(300);scrollZoneELE.scrollTop(100);break;
+          case 'D': scrollZoneELE.scrollLeft(0);scrollZoneELE.scrollTop(100);break;
+          default:break;
+        }
+      }
 
       if($scope.StartingNav){
         if($scope.user.zone !=  $scope.NavigateItem.zone){
@@ -164,8 +198,11 @@ App
   $scope.closeDialog = function(component){
     $scope.notifDialog = _.reject($scope.notifDialog,function(obj){ return obj.uuid == component.dialog.uuid});
     console.log(component.dialog);
-    if(component.dialog.type == 'danger')
-    socket.emit('ClearWatchListServiceClient',{data:component.dialog});
+    if(component.dialog.type == 'danger'){
+
+      socket.emit('ClearWatchListServiceClient',{data:component.dialog});
+      dangerSound();
+    }
   }
 
 
@@ -214,7 +251,7 @@ App
   }
 
   $scope.insertDataService = function(_uuid,_name,_artist,_url,_description,_zone) {
-    var datax= {uuid:_uuid,title:_name,painter:_artist,img:_url,description:_description};
+    var datax= {uuid:"89C5CF5B98F3457AB87EB7E534D1"+_uuid,title:_name,painter:_artist,img:_url,description:_description};
 
     console.log(datax);
     socket.emit('InsertDataServiceClient',datax);
@@ -255,7 +292,6 @@ App
     }
   }
 
-  $scope.StartingNav = false;
   $scope.NavigateItem;
   $scope.StartNavigate = function(_data){
     $scope.NavigateItem = _data;
@@ -264,7 +300,7 @@ App
     $scope.backToMain();
     $scope.closeInformation();
     if($scope.user.zone !=  $scope.NavigateItem.zone){
-       var findSource = _.findWhere(navCoredirection,{source:zone,next:(zone.localeCompare( $scope.NavigateItem.zone) == -1)});
+       var findSource = _.findWhere(navCoredirection,{source:zone,next:(zone.localeCompare($scope.NavigateItem.zone) == -1)});
        $scope.coredirection = findSource.core;
     }
     else {
